@@ -22,7 +22,13 @@ const handleLogin = async (username, password) => {
     }
 
     const responseData = await response.text();
-    console.log(responseData);
+
+    if (
+      responseData == `{"message":"Login failed, user doesn't exist."}` ||
+      responseData == `{"message":"Login failed, incorrect password."}`
+    ) {
+      throw new Error(responseData);
+    }
     return responseData;
   } catch (error) {
     throw new Error(error.message);

@@ -2,14 +2,14 @@ import React from "react";
 import { Button, SafeAreaView, StyleSheet, TextInput } from "react-native";
 import handleLogin from "../api/login";
 
-export default function LoginForm() {
+export default function LoginForm({ onLogin }) {
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
 
-  const submit = () => {
+  const submit = async () => {
     try {
-      const result = handleLogin(username, password);
-      console.log(result);
+      await handleLogin(username, password);
+      onLogin();
     } catch (error) {
       console.log(error);
     }
