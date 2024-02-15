@@ -8,8 +8,9 @@ export default function LoginForm({ onLogin }) {
 
   const submit = async () => {
     try {
-      await handleLogin(username, password);
-      onLogin();
+      const response = await handleLogin(username, password);
+      const parsedResponse = JSON.parse(response);
+      onLogin(parsedResponse.user);
     } catch (error) {
       console.log(error);
     }

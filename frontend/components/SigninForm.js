@@ -9,8 +9,9 @@ export default function SigninForm({ onLogin }) {
 
   const submit = async () => {
     try {
-      await handleSignin(username, password, passwordAgain);
-      onLogin();
+      const response = await handleSignin(username, password, passwordAgain);
+      const parsedResponse = JSON.parse(response);
+      onLogin(parsedResponse.user);
     } catch (error) {
       console.log(error);
     }

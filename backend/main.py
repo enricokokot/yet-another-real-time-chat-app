@@ -26,6 +26,9 @@ class NewUserInfo(BaseModel):
     password: str
     passwordAgain: str
 
+class User(BaseModel):
+    username: str
+
 users = {}
 
 @app.get("/")
@@ -36,7 +39,10 @@ async def root():
 async def login(userInfo: UserInfo):
     if userInfo.username in users.keys():
         if userInfo.password == users[userInfo.username]:
-            return {"message": "Login successful."}
+            return {
+                "message": "Login successful.",
+                "user": User(username=userInfo.username),
+                }
         else:
             return {"message": "Login failed, incorrect password."}
     return {"message": "Login failed, user doesn't exist."}
@@ -48,4 +54,7 @@ async def signin(userInfo: NewUserInfo):
     if userInfo.username in users.keys():
         return {"message": "User already exists!"}
     users[userInfo.username] = userInfo.password
-    return {"message": "User successfully created."}
+    return {
+        "message": "User successfully created.",
+        "user": User(username=userInfo.username),
+        }

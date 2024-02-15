@@ -7,20 +7,23 @@ import ChatApp from "../components/ChatApp";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState({});
 
-  const handleLogin = () => {
+  const handleLogin = (currentUser) => {
+    setCurrentUser(currentUser);
     setIsLoggedIn(true);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setCurrentUser({});
   };
 
   return (
     <SafeAreaView style={styles.container}>
       {isLoggedIn ? (
         <>
-          <ChatApp onLogout={handleLogout} />
+          <ChatApp onLogout={handleLogout} currentUser={currentUser} />
         </>
       ) : (
         <>
