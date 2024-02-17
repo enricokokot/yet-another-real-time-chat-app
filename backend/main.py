@@ -58,3 +58,8 @@ async def signin(userInfo: NewUserInfo):
         "message": "User successfully created.",
         "user": User(username=userInfo.username),
         }
+
+@app.get("/user/{userId}")
+async def getUsers(userId):
+    print(userId)
+    return [user for user in users]
