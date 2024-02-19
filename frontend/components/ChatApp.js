@@ -19,8 +19,8 @@ const ChatApp = ({ onLogout, currentUser }) => {
       const usersBesideCurrentUser = actualUsers.filter(
         (user) => user != currentUser.username
       );
-      const userOthers = usersBesideCurrentUser.filter((user) =>
-        actualFriends.includes(user)
+      const userOthers = usersBesideCurrentUser.filter(
+        (user) => !actualFriends.includes(user)
       );
 
       setFriends(actualFriends);

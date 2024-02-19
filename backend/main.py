@@ -26,8 +26,14 @@ class NewUserInfo(BaseModel):
     password: str
     passwordAgain: str
 
-class User(BaseModel):
+class UserInDb(BaseModel):
     username: str
+    password: str
+    friends: list[str]
+
+class UserOutDb(BaseModel):
+    username: str
+    friends: list[str]
 
 users = {}
 
@@ -38,10 +44,12 @@ async def root():
 @app.post("/login")
 async def login(userInfo: UserInfo):
     if userInfo.username in users.keys():
-        if userInfo.password == users[userInfo.username]:
+        if userInfo.password == users[userInfo.username].password:
+            returned_user = UserOutDb(username=users[userInfo.username].username,
+                                      friends=users[userInfo.username].friends)
             return {
                 "message": "Login successful.",
-                "user": User(username=userInfo.username),
+                "user": returned_user,
                 }
         else:
             return {"message": "Login failed, incorrect password."}
@@ -53,13 +61,17 @@ async def signin(userInfo: NewUserInfo):
         return {"message": "Passwords are not equal!"}
     if userInfo.username in users.keys():
         return {"message": "User already exists!"}
-    users[userInfo.username] = userInfo.password
+    new_user = UserInDb(username=userInfo.username, password=userInfo.password, friends=[])
+    users[userInfo.username] = new_user
     return {
         "message": "User successfully created.",
-        "user": User(username=userInfo.username),
+        "user": new_user,
         }
 
 @app.get("/user/{userId}")
 async def getUsers(userId):
-    print(userId)
-    return [user for user in users]
+    if users == {}:
+        return []
+    if userId == "undefined":
+        return [user for user in users]
+    return users[userId].friends
