@@ -1,12 +1,12 @@
 import { View, Button, StyleSheet, Text } from "react-native";
 
-const UsersList = ({ users, title }) => {
+const UsersList = ({ users, title, friendStuff }) => {
   return (
     <View style={styles.container}>
       <Text style={{ fontWeight: "bold" }}>{title}</Text>
       {users.map((user) => (
         <View style={styles.paddedElement} key={user}>
-          <Button title={user}></Button>
+          <Button title={user} onPress={() => friendStuff(user)}></Button>
         </View>
       ))}
     </View>

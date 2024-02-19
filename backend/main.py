@@ -69,9 +69,41 @@ async def signin(userInfo: NewUserInfo):
         }
 
 @app.get("/user/{userId}")
-async def getUsers(userId):
+async def get_users(userId):
     if users == {}:
         return []
     if userId == "undefined":
         return [user for user in users]
     return users[userId].friends
+
+@app.post("/user/{requestUserId}/{responseUserId}")
+async def add_friend(requestUserId, responseUserId):
+    if requestUserId == "undefined" or responseUserId == "undefined":
+        return {"message": "Request failed, need both user ids."}
+
+    requestUser = users[requestUserId]
+    responseUser = users[responseUserId]
+
+    requestUser.friends.append(responseUserId)
+    responseUser.friends.append(requestUserId)
+
+    incoming_user = UserOutDb(username=requestUser.username, friends=requestUser.friends)
+
+    return {"message": "User added as friend",
+            "user": incoming_user}
+
+@app.delete("/user/{requestUserId}/{responseUserId}")
+async def add_friend(requestUserId, responseUserId):
+    if requestUserId == "undefined" or responseUserId == "undefined":
+        return {"message": "Request failed, need both user ids."}
+
+    requestUser = users[requestUserId]
+    responseUser = users[responseUserId]
+
+    requestUser.friends.remove(responseUserId)
+    responseUser.friends.remove(requestUserId)
+
+    incoming_user = UserOutDb(username=requestUser.username, friends=requestUser.friends)
+
+    return {"message": "User removed as friend",
+            "user": incoming_user}

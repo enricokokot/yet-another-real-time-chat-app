@@ -3,6 +3,8 @@ import { View, Button, StyleSheet } from "react-native";
 import Circle from "./Circle";
 import handleUsersFetch from "../api/users";
 import UsersList from "./UsersList";
+import handleUsersMakingFriends from "../api/addfriend";
+import handleUsersRemovingFriends from "../api/removefriend";
 
 const ChatApp = ({ onLogout, currentUser }) => {
   const [friends, setFriends] = useState([]);
@@ -30,6 +32,24 @@ const ChatApp = ({ onLogout, currentUser }) => {
     }
   };
 
+  const addFriend = async (user) => {
+    try {
+      await handleUsersMakingFriends(currentUser.username, user);
+      fetchUsers();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const removeFriend = async (user) => {
+    try {
+      await handleUsersRemovingFriends(currentUser.username, user);
+      fetchUsers();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => fetchUsers, [currentUser]);
 
   const submit = () => {
@@ -43,8 +63,12 @@ const ChatApp = ({ onLogout, currentUser }) => {
         content={currentUser.username}
       ></Circle>
       <View style={{ flexDirection: "row" }}>
-        <UsersList users={friends} title={"friends"} />
-        <UsersList users={others} title={"others"} />
+        <UsersList
+          users={friends}
+          title={"friends"}
+          friendStuff={removeFriend}
+        />
+        <UsersList users={others} title={"others"} friendStuff={addFriend} />
       </View>
       <View style={styles.paddedElement}>
         <Button onPress={() => submit()} title="log out" />
