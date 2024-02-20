@@ -14,13 +14,14 @@ const ChatApp = ({ onLogout, currentUser }) => {
 
   useEffect(() => {
     fetchUsers();
-  }, [friends]);
+  }, []);
 
   const fetchUsers = async () => {
     try {
       const allUsers = await handleUsersFetch();
+      const usersFriends = await handleUsersFetch(currentUser.username);
       const actualUsers = Array.from(JSON.parse(allUsers));
-      const actualFriends = currentUser.friends;
+      const actualFriends = Array.from(JSON.parse(usersFriends));
 
       const usersBesideCurrentUser = actualUsers.filter(
         (user) => user != currentUser.username
