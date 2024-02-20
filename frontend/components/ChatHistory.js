@@ -1,8 +1,15 @@
-import { View, StyleSheet, Text } from "react-native";
+import { useRef, useEffect } from "react";
+import { View, StyleSheet, Text, ScrollView } from "react-native";
 
 const ChatHistory = ({ currentUser, currentChat }) => {
+  const scrollViewRef = useRef();
+
+  useEffect(() => {
+    scrollViewRef.current.scrollToEnd({ animated: true });
+  }, [currentChat]);
+
   return currentChat ? (
-    <View style={styles.container}>
+    <ScrollView ref={scrollViewRef} style={styles.container}>
       {currentChat.map((message) =>
         message.fromId == currentUser ? (
           <View style={styles.userBubble} key={message.timestamp}>
@@ -14,7 +21,7 @@ const ChatHistory = ({ currentUser, currentChat }) => {
           </View>
         )
       )}
-    </View>
+    </ScrollView>
   ) : (
     <View style={styles.container}>
       <Text>x</Text>
@@ -33,14 +40,14 @@ const styles = StyleSheet.create({
     margin: 2,
     backgroundColor: "#09ADF6",
   },
-  userText: {
-    color: "white",
-  },
   otherBubble: {
     padding: 5,
     margin: 2,
     alignItems: "flex-end",
     backgroundColor: "white",
+  },
+  userText: {
+    color: "white",
   },
 });
 
