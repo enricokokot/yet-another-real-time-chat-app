@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from datetime import datetime
 
 app = FastAPI()
 
@@ -35,7 +36,19 @@ class UserOutDb(BaseModel):
     username: str
     friends: list[str]
 
+class MessageInfo(BaseModel):
+    fromId: str
+    toId: str
+    content: str
+
+class Message(BaseModel):
+    fromId: str
+    toId: str
+    content: str
+    timestamp: str
+
 users = {}
+messages = []
 
 @app.get("/")
 async def root():
@@ -84,7 +97,12 @@ async def add_friend(requestUserId, responseUserId):
     requestUser = users[requestUserId]
     responseUser = users[responseUserId]
 
+    if responseUserId in requestUser.friends:
+        return {"message": "User already added as friend"}    
     requestUser.friends.append(responseUserId)
+
+    if requestUserId in responseUser.friends:
+        return {"message": "User already added as friend"}    
     responseUser.friends.append(requestUserId)
 
     incoming_user = UserOutDb(username=requestUser.username, friends=requestUser.friends)
@@ -93,17 +111,37 @@ async def add_friend(requestUserId, responseUserId):
             "user": incoming_user}
 
 @app.delete("/user/{requestUserId}/{responseUserId}")
-async def add_friend(requestUserId, responseUserId):
+async def remove_friend(requestUserId, responseUserId):
     if requestUserId == "undefined" or responseUserId == "undefined":
         return {"message": "Request failed, need both user ids."}
 
     requestUser = users[requestUserId]
     responseUser = users[responseUserId]
 
-    requestUser.friends.remove(responseUserId)
-    responseUser.friends.remove(requestUserId)
+    if responseUserId in requestUser.friends:
+        requestUser.friends.remove(responseUserId)
+    if requestUserId in responseUser.friends:        
+        responseUser.friends.remove(requestUserId)
 
     incoming_user = UserOutDb(username=requestUser.username, friends=requestUser.friends)
 
     return {"message": "User removed as friend",
             "user": incoming_user}
+
+@app.post("/message")
+async def send_message(message: MessageInfo):
+    new_message = Message(fromId=message.fromId,
+                          toId=message.toId,
+                          content=message.content,
+                          timestamp=str(datetime.now()))
+    messages.append(new_message)
+    return {"message": "Message successfully sent"}
+
+@app.get("/message/{fromId}/{toId}")
+async def get_chat(fromId, toId):
+    if fromId == "undefined" or toId == "undefined":
+        return {"message": "Request failed, need both user ids."}
+    
+    chat = [message for message in list(reversed(messages)) if ((message.fromId == fromId and message.toId == toId) or (message.fromId == toId and message.toId == fromId))]
+    return {"message": "Chat successfully found",
+            "data": chat}
