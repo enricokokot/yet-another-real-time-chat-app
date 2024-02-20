@@ -11,21 +11,23 @@ const ChatScreen = ({ subject, currentUser }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text>{subject}</Text>
-      <ChatHistory
-        currentUser={currentUser.username}
-        currentSubject={subject}
-      />
-      <View style={styles.sender}>
-        <View style={{ flex: 4 }}>
-          <TextInput style={styles.input} onChangeText={onChangeText} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Button onPress={handleSend} />
+    subject && (
+      <View style={styles.container}>
+        <Text>{subject}</Text>
+        <ChatHistory
+          currentUser={currentUser.username}
+          currentSubject={subject}
+        />
+        <View style={styles.sender}>
+          <View style={{ flex: 4 }}>
+            <TextInput style={styles.input} onChangeText={onChangeText} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button onPress={handleSend} />
+          </View>
         </View>
       </View>
-    </View>
+    )
   );
 };
 
