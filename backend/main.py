@@ -142,6 +142,6 @@ async def get_chat(fromId, toId):
     if fromId == "undefined" or toId == "undefined":
         return {"message": "Request failed, need both user ids."}
     
-    chat = [message for message in messages if ((message.fromId == fromId and message.toId == toId) or (message.fromId == toId and message.toId == fromId))]
+    chat = [message for message in list(reversed(messages)) if ((message.fromId == fromId and message.toId == toId) or (message.fromId == toId and message.toId == fromId))]
     return {"message": "Chat successfully found",
             "data": chat}

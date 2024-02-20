@@ -20,7 +20,7 @@ const ChatScreen = ({ subject, currentUser }) => {
     try {
       const data = await handleGettingChatHistory(user, subject);
       const parsedData = JSON.parse(data);
-      const chatHistory = parsedData.data;
+      const chatHistory = parsedData.data.toReversed();
       setCurrentChat(chatHistory.map((message) => message));
     } catch (error) {
       console.log(error);
