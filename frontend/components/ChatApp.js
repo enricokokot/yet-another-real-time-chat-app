@@ -5,18 +5,22 @@ import handleUsersFetch from "../api/users";
 import UsersList from "./UsersList";
 import handleUsersMakingFriends from "../api/addfriend";
 import handleUsersRemovingFriends from "../api/removefriend";
+import ChatScreen from "./ChatScreen";
 
 const ChatApp = ({ onLogout, currentUser }) => {
   const [friends, setFriends] = useState([]);
   const [others, setOthers] = useState([]);
+  const [currentSubject, setCurrentSubject] = useState("");
+
+  useEffect(() => {
+    fetchUsers();
+  }, [friends]);
 
   const fetchUsers = async () => {
     try {
       const allUsers = await handleUsersFetch();
-      const userFriends = await handleUsersFetch(currentUser.username);
-
       const actualUsers = Array.from(JSON.parse(allUsers));
-      const actualFriends = Array.from(JSON.parse(userFriends));
+      const actualFriends = currentUser.friends;
 
       const usersBesideCurrentUser = actualUsers.filter(
         (user) => user != currentUser.username
@@ -50,7 +54,9 @@ const ChatApp = ({ onLogout, currentUser }) => {
     }
   };
 
-  useEffect(() => fetchUsers, [currentUser]);
+  const changeSubject = (user) => {
+    setCurrentSubject(user);
+  };
 
   const submit = () => {
     onLogout();
@@ -67,9 +73,16 @@ const ChatApp = ({ onLogout, currentUser }) => {
           users={friends}
           title={"friends"}
           friendStuff={removeFriend}
+          startChat={changeSubject}
         />
-        <UsersList users={others} title={"others"} friendStuff={addFriend} />
+        <UsersList
+          users={others}
+          title={"others"}
+          friendStuff={addFriend}
+          startChat={changeSubject}
+        />
       </View>
+      <ChatScreen subject={currentSubject} currentUser={currentUser} />
       <View style={styles.paddedElement}>
         <Button onPress={() => submit()} title="log out" />
       </View>

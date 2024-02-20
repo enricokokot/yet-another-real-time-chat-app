@@ -1,9 +1,9 @@
-const handleUsersMakingFriends = async (requestId, responseId) => {
+const handleGettingChatHistory = async (requestId, responseId) => {
   try {
     const response = await fetch(
-      `http://127.0.0.1:8010/user/${requestId}/${responseId}`,
+      `http://127.0.0.1:8010/message/${requestId}/${responseId}`,
       {
-        method: "POST",
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
@@ -25,4 +25,4 @@ const handleUsersMakingFriends = async (requestId, responseId) => {
   }
 };
 
-export default handleUsersMakingFriends;
+export default handleGettingChatHistory;
