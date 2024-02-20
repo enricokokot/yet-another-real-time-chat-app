@@ -1,29 +1,6 @@
-import { useEffect, useState } from "react";
 import { View, StyleSheet, Text } from "react-native";
-import handleGettingChatHistory from "../api/getchat";
 
-const ChatHistory = ({ currentUser, currentSubject }) => {
-  const [currentChat, setCurrentChat] = useState([]);
-
-  const getChatHistory = async (user, subject) => {
-    if (!user || !subject) {
-      console.log("user or subject is empty!");
-      return;
-    }
-    try {
-      const data = await handleGettingChatHistory(user, subject);
-      const parsedData = JSON.parse(data);
-      const chatHistory = parsedData.data;
-      setCurrentChat(chatHistory.map((message) => message));
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    getChatHistory(currentUser, currentSubject);
-  }, [currentSubject]);
-
+const ChatHistory = ({ currentUser, currentChat }) => {
   return currentChat ? (
     <View style={styles.container}>
       {currentChat.map((message) =>

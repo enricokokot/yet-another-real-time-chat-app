@@ -1,13 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, StyleSheet, Text, TextInput, Button } from "react-native";
 import ChatHistory from "./ChatHistory";
+import handleGettingChatHistory from "../api/getchat";
 import handleSendMessage from "../api/sendmessage";
 
 const ChatScreen = ({ subject, currentUser }) => {
   const [text, onChangeText] = useState("");
+  const [currentChat, setCurrentChat] = useState([]);
+
+  useEffect(() => {
+    getChatHistory(currentUser.username, subject);
+  }, [subject]);
+
+  const getChatHistory = async (user, subject) => {
+    if (!user || !subject) {
+      console.log("user or subject is empty!");
+      return;
+    }
+    try {
+      const data = await handleGettingChatHistory(user, subject);
+      const parsedData = JSON.parse(data);
+      const chatHistory = parsedData.data;
+      setCurrentChat(chatHistory.map((message) => message));
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleSend = async () => {
     await handleSendMessage(currentUser.username, subject, text);
+    getChatHistory(currentUser.username, subject);
   };
 
   return (
@@ -16,7 +38,7 @@ const ChatScreen = ({ subject, currentUser }) => {
         <Text>{subject}</Text>
         <ChatHistory
           currentUser={currentUser.username}
-          currentSubject={subject}
+          currentChat={currentChat}
         />
         <View style={styles.sender}>
           <View style={{ flex: 4 }}>
