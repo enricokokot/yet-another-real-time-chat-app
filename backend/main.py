@@ -118,9 +118,9 @@ async def remove_friend(requestUserId, responseUserId):
     requestUser = users[requestUserId]
     responseUser = users[responseUserId]
 
-    if responseUser in requestUser.friends:
+    if responseUserId in requestUser.friends:
         requestUser.friends.remove(responseUserId)
-    if requestUser in responseUser.friends:        
+    if requestUserId in responseUser.friends:        
         responseUser.friends.remove(requestUserId)
 
     incoming_user = UserOutDb(username=requestUser.username, friends=requestUser.friends)
