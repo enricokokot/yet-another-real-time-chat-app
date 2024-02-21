@@ -1,13 +1,20 @@
-const handleOpeningWebSocket = (currentUserUsername) => {
+const handleOpeningWebSocket = (currentUserUsername, flipBit) => {
   const ws = new WebSocket("ws://localhost:8010/ws");
 
   ws.onopen = () => {
     console.log("connection opened");
-    ws.send(`connection opened by ${currentUserUsername}`);
+    const theObject = {
+      type: "connection",
+      data: {
+        user: currentUserUsername,
+      },
+    };
+    ws.send(JSON.stringify(theObject));
   };
 
   ws.onmessage = (e) => {
     console.log("a message was received");
+    flipBit((prev) => !prev);
     console.log(e.data);
   };
 
