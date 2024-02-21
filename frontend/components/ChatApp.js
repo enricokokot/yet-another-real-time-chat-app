@@ -6,13 +6,21 @@ import UsersList from "./UsersList";
 import handleUsersMakingFriends from "../api/addfriend";
 import handleUsersRemovingFriends from "../api/removefriend";
 import ChatScreen from "./ChatScreen";
+import handleOpeningWebSocket from "../api/ws";
 
 const ChatApp = ({ onLogout, currentUser }) => {
   const [friends, setFriends] = useState([]);
   const [others, setOthers] = useState([]);
   const [currentSubject, setCurrentSubject] = useState("");
+  const [ws, setWs] = useState(null);
+
+  const openWebSocket = () => {
+    const ws = handleOpeningWebSocket(currentUser.username);
+    setWs(ws);
+  };
 
   useEffect(() => {
+    openWebSocket();
     fetchUsers();
   }, []);
 
@@ -60,6 +68,7 @@ const ChatApp = ({ onLogout, currentUser }) => {
   };
 
   const submit = () => {
+    ws.close();
     onLogout();
   };
 
