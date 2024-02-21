@@ -13,9 +13,10 @@ const ChatApp = ({ onLogout, currentUser }) => {
   const [others, setOthers] = useState([]);
   const [currentSubject, setCurrentSubject] = useState("");
   const [ws, setWs] = useState(null);
+  const [flippableBit, setFlippableBit] = useState(false);
 
   const openWebSocket = () => {
-    const ws = handleOpeningWebSocket(currentUser.username);
+    const ws = handleOpeningWebSocket(currentUser.username, setFlippableBit);
     setWs(ws);
   };
 
@@ -92,7 +93,12 @@ const ChatApp = ({ onLogout, currentUser }) => {
           startChat={changeSubject}
         />
       </View>
-      <ChatScreen subject={currentSubject} currentUser={currentUser} />
+      <ChatScreen
+        subject={currentSubject}
+        currentUser={currentUser}
+        connection={ws}
+        flippableBit={flippableBit}
+      />
       <View style={styles.paddedElement}>
         <Button onPress={() => submit()} title="log out" />
       </View>
