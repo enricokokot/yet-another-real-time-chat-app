@@ -163,6 +163,6 @@ async def websocket_endpoint(websocket: WebSocket):
                     message = loaded_data["data"]["content"]
                     await active_connections[loaded_data["data"]["toId"]].send_text(message)
     except:
-        for key, value in active_connections.items():
+        for key, value in dict(active_connections).items():
             if value == websocket:
                 active_connections.pop(key, None)
