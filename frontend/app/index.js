@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SafeAreaView, StyleSheet } from "react-native";
+import { SafeAreaView, StyleSheet, View } from "react-native";
 import LoginForm from "../components/LoginForm";
 import SigninForm from "../components/SigninForm";
 import VerticalLine from "../components/VerticalLine";
@@ -20,28 +20,31 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.topContainer}>
       {isLoggedIn ? (
         <>
           <ChatApp onLogout={handleLogout} currentUser={currentUser} />
         </>
       ) : (
-        <>
+        <View style={styles.container}>
           <LoginForm onLogin={handleLogin} />
           <VerticalLine height={350} color="grey" />
           <SigninForm onLogin={handleLogin} />
-        </>
+        </View>
       )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  topContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
   container: {
     flex: 1,
-    flexDirection: "row",
-    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row",
   },
 });

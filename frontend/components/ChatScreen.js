@@ -54,7 +54,7 @@ const ChatScreen = ({ subject, currentUser, connection, inbox }) => {
           currentChat={currentChat}
         />
         <View style={styles.sender}>
-          <View style={{ flex: 4 }}>
+          <View style={{ flex: 5 }}>
             <TextInput style={styles.input} onChangeText={onChangeText} />
           </View>
           <View style={{ flex: 1 }}>
@@ -68,13 +68,16 @@ const ChatScreen = ({ subject, currentUser, connection, inbox }) => {
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: "center",
+    flex: 1,
   },
   sender: {
+    height: 50,
     flexDirection: "row",
+    backgroundColor: "#e8f3fd",
   },
   input: {
     borderWidth: 1,
+    backgroundColor: "white",
   },
 });
 

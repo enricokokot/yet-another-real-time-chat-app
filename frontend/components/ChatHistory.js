@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { View, StyleSheet, Text, ScrollView } from "react-native";
+import { View, StyleSheet, Text, ScrollView, Dimensions } from "react-native";
 
 const ChatHistory = ({ currentUser, currentChat }) => {
   const scrollViewRef = useRef();
@@ -31,18 +31,17 @@ const ChatHistory = ({ currentUser, currentChat }) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: 200,
-    height: 300,
+    height: Dimensions.get("window").height * 0.5,
     backgroundColor: "#C6ECFD",
   },
   userBubble: {
     padding: 5,
-    margin: 2,
+    margin: 5,
     backgroundColor: "#09ADF6",
   },
   otherBubble: {
     padding: 5,
-    margin: 2,
+    margin: 5,
     alignItems: "flex-end",
     backgroundColor: "white",
   },
