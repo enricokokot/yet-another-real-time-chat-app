@@ -4,13 +4,13 @@ import ChatHistory from "./ChatHistory";
 import handleGettingChatHistory from "../api/getchat";
 import handleSendMessage from "../api/sendmessage";
 
-const ChatScreen = ({ subject, currentUser, connection, flippableBit }) => {
+const ChatScreen = ({ subject, currentUser, connection, inbox }) => {
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
 
   useEffect(() => {
     getChatHistory(currentUser.username, subject);
-  }, [subject, flippableBit]);
+  }, [subject, inbox]);
 
   const getChatHistory = async (user, subject) => {
     if (!user || !subject) {
