@@ -50,6 +50,7 @@ class Message(BaseModel):
 
 users = {}
 messages = []
+unsent_messages = []
 active_connections = {}
 
 @app.get("/")
@@ -158,9 +159,15 @@ async def websocket_endpoint(websocket: WebSocket):
             loaded_data = json.loads(data)
             if loaded_data["type"] == "connection":
                     active_connections[loaded_data["data"]["user"]] = websocket
+                    for message in unsent_messages:
+                        if message["data"]["toId"] == loaded_data["data"]["user"]:
+                            await websocket.send_text(json.dumps(message))
+                            unsent_messages.remove(message)
             if loaded_data["type"] == "message":
                 if loaded_data["data"]["toId"] in active_connections.keys():
                     await active_connections[loaded_data["data"]["toId"]].send_text(json.dumps(loaded_data))
+                else:
+                    unsent_messages.append(loaded_data)
     except:
         for key, value in dict(active_connections).items():
             if value == websocket:

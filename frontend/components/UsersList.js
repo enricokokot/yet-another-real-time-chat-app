@@ -1,8 +1,6 @@
 import { View, Button, StyleSheet, Text } from "react-native";
 
 const UsersList = ({ users, title, friendStuff, startChat, inbox }) => {
-  console.log("UsersLIstInbox: " + Array.from(inbox));
-
   return (
     <View style={styles.container}>
       <Text style={{ fontWeight: "bold" }}>{title}</Text>
