@@ -25,6 +25,10 @@ const ChatApp = ({ onLogout, currentUser }) => {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    setInbox(inbox.filter((message) => message.data.fromId !== currentSubject));
+  }, [currentSubject]);
+
   const fetchUsers = async () => {
     try {
       const allUsers = await handleUsersFetch();
@@ -66,9 +70,6 @@ const ChatApp = ({ onLogout, currentUser }) => {
 
   const changeSubject = (user) => {
     setCurrentSubject(user);
-    setInbox((inbox) =>
-      inbox.filter((message) => message.data.fromId !== currentSubject)
-    );
   };
 
   const submit = () => {
@@ -89,6 +90,7 @@ const ChatApp = ({ onLogout, currentUser }) => {
           friendStuff={removeFriend}
           startChat={changeSubject}
           inbox={inbox}
+          currentSubject={currentSubject}
         />
         <UsersList
           users={others}
@@ -96,12 +98,14 @@ const ChatApp = ({ onLogout, currentUser }) => {
           friendStuff={addFriend}
           startChat={changeSubject}
           inbox={inbox}
+          currentSubject={currentSubject}
         />
       </View>
       <ChatScreen
         subject={currentSubject}
         currentUser={currentUser}
         connection={ws}
+        inbox={inbox}
       />
       <View style={styles.paddedElement}>
         <Button onPress={() => submit()} title="log out" />

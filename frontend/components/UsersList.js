@@ -1,6 +1,13 @@
 import { View, Button, StyleSheet, Text } from "react-native";
 
-const UsersList = ({ users, title, friendStuff, startChat, inbox }) => {
+const UsersList = ({
+  users,
+  title,
+  friendStuff,
+  startChat,
+  inbox,
+  currentSubject,
+}) => {
   return (
     <View style={styles.container}>
       <Text style={{ fontWeight: "bold" }}>{title}</Text>
@@ -9,7 +16,9 @@ const UsersList = ({ users, title, friendStuff, startChat, inbox }) => {
           <Button title={user} onPress={() => friendStuff(user)}></Button>
           <Text>
             Messages in inbox:{" "}
-            {inbox.filter((msg) => msg.data.fromId.includes(user)).length}
+            {currentSubject == user
+              ? 0
+              : inbox.filter((msg) => msg.data.fromId.includes(user)).length}
           </Text>
           <Button title={"chat"} onPress={() => startChat(user)}></Button>
         </View>
