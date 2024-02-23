@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime
+import json
 
 app = FastAPI()
 
@@ -49,6 +50,7 @@ class Message(BaseModel):
 
 users = {}
 messages = []
+active_connections = {}
 
 @app.get("/")
 async def root():
@@ -145,3 +147,22 @@ async def get_chat(fromId, toId):
     chat = [message for message in list(reversed(messages)) if ((message.fromId == fromId and message.toId == toId) or (message.fromId == toId and message.toId == fromId))]
     return {"message": "Chat successfully found",
             "data": chat}
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            loaded_data = json.loads(data)
+            if loaded_data["type"] == "connection":
+                    active_connections[loaded_data["data"]["user"]] = websocket
+            if loaded_data["type"] == "message":
+                if loaded_data["data"]["toId"] in active_connections.keys():
+                    message = loaded_data["data"]["content"]
+                    await active_connections[loaded_data["data"]["toId"]].send_text(message)
+    except:
+        for key, value in active_connections.items():
+            if value == websocket:
+                active_connections.pop(key, None)

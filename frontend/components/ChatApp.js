@@ -6,13 +6,22 @@ import UsersList from "./UsersList";
 import handleUsersMakingFriends from "../api/addfriend";
 import handleUsersRemovingFriends from "../api/removefriend";
 import ChatScreen from "./ChatScreen";
+import handleOpeningWebSocket from "../api/ws";
 
 const ChatApp = ({ onLogout, currentUser }) => {
   const [friends, setFriends] = useState([]);
   const [others, setOthers] = useState([]);
   const [currentSubject, setCurrentSubject] = useState("");
+  const [ws, setWs] = useState(null);
+  const [flippableBit, setFlippableBit] = useState(false);
+
+  const openWebSocket = () => {
+    const ws = handleOpeningWebSocket(currentUser.username, setFlippableBit);
+    setWs(ws);
+  };
 
   useEffect(() => {
+    openWebSocket();
     fetchUsers();
   }, []);
 
@@ -60,6 +69,7 @@ const ChatApp = ({ onLogout, currentUser }) => {
   };
 
   const submit = () => {
+    ws.close();
     onLogout();
   };
 
@@ -83,7 +93,12 @@ const ChatApp = ({ onLogout, currentUser }) => {
           startChat={changeSubject}
         />
       </View>
-      <ChatScreen subject={currentSubject} currentUser={currentUser} />
+      <ChatScreen
+        subject={currentSubject}
+        currentUser={currentUser}
+        connection={ws}
+        flippableBit={flippableBit}
+      />
       <View style={styles.paddedElement}>
         <Button onPress={() => submit()} title="log out" />
       </View>
