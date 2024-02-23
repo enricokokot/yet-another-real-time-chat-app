@@ -1,4 +1,4 @@
-const handleOpeningWebSocket = (currentUserUsername, flipBit) => {
+const handleOpeningWebSocket = (currentUserUsername, setInbox) => {
   const ws = new WebSocket("ws://localhost:8010/ws");
 
   ws.onopen = () => {
@@ -14,7 +14,7 @@ const handleOpeningWebSocket = (currentUserUsername, flipBit) => {
 
   ws.onmessage = (e) => {
     console.log("a message was received");
-    flipBit((prev) => !prev);
+    setInbox((prev) => [...prev, JSON.parse(e.data)]);
     console.log(e.data);
   };
 

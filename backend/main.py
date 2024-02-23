@@ -160,8 +160,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     active_connections[loaded_data["data"]["user"]] = websocket
             if loaded_data["type"] == "message":
                 if loaded_data["data"]["toId"] in active_connections.keys():
-                    message = loaded_data["data"]["content"]
-                    await active_connections[loaded_data["data"]["toId"]].send_text(message)
+                    await active_connections[loaded_data["data"]["toId"]].send_text(json.dumps(loaded_data))
     except:
         for key, value in dict(active_connections).items():
             if value == websocket:
