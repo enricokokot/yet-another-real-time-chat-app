@@ -63,6 +63,7 @@ const ChatScreen = ({ subject, currentUser, connection, inbox }) => {
               ref={inputRef}
               style={styles.input}
               onChangeText={onChangeText}
+              onSubmitEditing={handleSend}
             />
           </View>
           <View
