@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
-import { View, StyleSheet, Text, TextInput, Button } from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { View, StyleSheet, TextInput, Pressable } from "react-native";
 import ChatHistory from "./ChatHistory";
 import handleGettingChatHistory from "../api/getchat";
 import handleSendMessage from "../api/sendmessage";
+import Circle from "./Circle";
 
 const ChatScreen = ({ subject, currentUser, connection, inbox }) => {
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
+  const inputRef = useRef();
 
   useEffect(() => {
     getChatHistory(currentUser.username, subject);
@@ -34,6 +36,8 @@ const ChatScreen = ({ subject, currentUser, connection, inbox }) => {
       content: text,
     };
 
+    inputRef.current.clear();
+
     const wholeData = {
       type: "message",
       data: data,
@@ -48,17 +52,25 @@ const ChatScreen = ({ subject, currentUser, connection, inbox }) => {
   return (
     subject && (
       <View style={styles.container}>
-        <Text>{subject}</Text>
         <ChatHistory
           currentUser={currentUser.username}
           currentChat={currentChat}
         />
         <View style={styles.sender}>
-          <View style={{ flex: 4 }}>
-            <TextInput style={styles.input} onChangeText={onChangeText} />
+          <View style={styles.inputContainer}>
+            <TextInput
+              ref={inputRef}
+              style={styles.input}
+              onChangeText={onChangeText}
+              onSubmitEditing={handleSend}
+            />
           </View>
-          <View style={{ flex: 1 }}>
-            <Button onPress={handleSend} />
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            <Pressable onPress={handleSend}>
+              <Circle style={{ width: 35, height: 35 }} content={"🚀"} />
+            </Pressable>
           </View>
         </View>
       </View>
@@ -68,13 +80,24 @@ const ChatScreen = ({ subject, currentUser, connection, inbox }) => {
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: "center",
+    flex: 1,
   },
   sender: {
+    height: 50,
     flexDirection: "row",
+    backgroundColor: "#e8f3fd",
   },
   input: {
-    borderWidth: 1,
+    outlineColor: "transparent",
+    outlineWidth: 0,
+    paddingHorizontal: 10,
+  },
+  inputContainer: {
+    flex: 9,
+    margin: 10,
+    borderRadius: 10,
+    backgroundColor: "#fff",
+    justifyContent: "center",
   },
 });
 

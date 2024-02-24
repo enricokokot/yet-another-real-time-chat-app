@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Button, StyleSheet } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import Circle from "./Circle";
 import handleUsersFetch from "../api/users";
 import UsersList from "./UsersList";
@@ -79,36 +79,34 @@ const ChatApp = ({ onLogout, currentUser }) => {
 
   return (
     <View style={styles.container}>
-      <Circle
-        style={styles.paddedElement}
-        content={currentUser.username}
-      ></Circle>
-      <View style={{ flexDirection: "row" }}>
-        <UsersList
-          users={friends}
-          title={"friends"}
-          friendStuff={removeFriend}
-          startChat={changeSubject}
-          inbox={inbox}
-          currentSubject={currentSubject}
-        />
+      <View style={styles.horizontalBar}>
+        <Pressable onPress={() => submit()}>
+          <Circle style={styles.paddedElement} content={currentUser.username} />
+        </Pressable>
         <UsersList
           users={others}
-          title={"others"}
           friendStuff={addFriend}
           startChat={changeSubject}
           inbox={inbox}
           currentSubject={currentSubject}
         />
       </View>
-      <ChatScreen
-        subject={currentSubject}
-        currentUser={currentUser}
-        connection={ws}
-        inbox={inbox}
-      />
-      <View style={styles.paddedElement}>
-        <Button onPress={() => submit()} title="log out" />
+      <View style={styles.underBar}>
+        <View style={styles.verticalBar}>
+          <UsersList
+            users={friends}
+            friendStuff={removeFriend}
+            startChat={changeSubject}
+            inbox={inbox}
+            currentSubject={currentSubject}
+          />
+        </View>
+        <ChatScreen
+          subject={currentSubject}
+          currentUser={currentUser}
+          connection={ws}
+          inbox={inbox}
+        />
       </View>
     </View>
   );
@@ -117,11 +115,27 @@ const ChatApp = ({ onLogout, currentUser }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
   paddedElement: {
     margin: 10,
+  },
+  horizontalBar: {
+    height: 100,
+    backgroundColor: "#e8f3fd",
+    alignItems: "center",
+    paddingLeft: 5,
+    flexDirection: "row",
+  },
+  underBar: {
+    flex: 1,
+    backgroundColor: "#fff",
+    flexDirection: "row",
+  },
+  verticalBar: {
+    width: 100,
+    backgroundColor: "#e8f3fd",
+    alignItems: "center",
+    paddingTop: 10,
   },
 });
 

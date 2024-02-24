@@ -31,19 +31,25 @@ const ChatHistory = ({ currentUser, currentChat }) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: 200,
-    height: 300,
+    height: 0,
     backgroundColor: "#C6ECFD",
   },
   userBubble: {
     padding: 5,
-    margin: 2,
+    paddingHorizontal: 12,
+    margin: 5,
     backgroundColor: "#09ADF6",
+    borderRadius: 20,
+    alignSelf: "flex-start",
+    maxWidth: "60%",
   },
   otherBubble: {
     padding: 5,
-    margin: 2,
-    alignItems: "flex-end",
+    paddingHorizontal: 12,
+    margin: 5,
+    borderRadius: 20,
+    alignSelf: "flex-end",
+    maxWidth: "60%",
     backgroundColor: "white",
   },
   userText: {
