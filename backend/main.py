@@ -3,7 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime
 import json
+from passlib.context import CryptContext
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 app = FastAPI()
 
 origins = [
@@ -60,7 +62,7 @@ async def root():
 @app.post("/login")
 async def login(userInfo: UserInfo):
     if userInfo.username in users.keys():
-        if userInfo.password == users[userInfo.username].password:
+        if verify_password(userInfo.password, users[userInfo.username].password):
             returned_user = UserOutDb(username=users[userInfo.username].username,
                                       friends=users[userInfo.username].friends)
             return {
@@ -77,7 +79,7 @@ async def signin(userInfo: NewUserInfo):
         return {"message": "Passwords are not equal!"}
     if userInfo.username in users.keys():
         return {"message": "User already exists!"}
-    new_user = UserInDb(username=userInfo.username, password=userInfo.password, friends=[])
+    new_user = UserInDb(username=userInfo.username, password=hash_password(userInfo.password), friends=[])
     users[userInfo.username] = new_user
     return {
         "message": "User successfully created.",
@@ -172,3 +174,9 @@ async def websocket_endpoint(websocket: WebSocket):
         for key, value in dict(active_connections).items():
             if value == websocket:
                 active_connections.pop(key, None)
+
+def hash_password(password: str):
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str):
+    return pwd_context.verify(plain_password, hashed_password)
