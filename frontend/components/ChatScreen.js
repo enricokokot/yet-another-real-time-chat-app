@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Text, TextInput, Pressable } from "react-native";
+import { View, StyleSheet, TextInput, Pressable } from "react-native";
 import ChatHistory from "./ChatHistory";
 import handleGettingChatHistory from "../api/getchat";
 import handleSendMessage from "../api/sendmessage";
@@ -52,7 +52,6 @@ const ChatScreen = ({ subject, currentUser, connection, inbox }) => {
   return (
     subject && (
       <View style={styles.container}>
-        <Text>{subject}</Text>
         <ChatHistory
           currentUser={currentUser.username}
           currentChat={currentChat}

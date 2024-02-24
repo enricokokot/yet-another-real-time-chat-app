@@ -12,7 +12,12 @@ const UsersList = ({
     <>
       {users.map((user) => (
         <View key={user} style={styles.container}>
-          <Circle content={user} />
+          <Circle
+            content={user}
+            style={
+              user === currentSubject && { borderWidth: 2, borderColor: "#000" }
+            }
+          />
           <Pressable style={styles.bottomLeft} onPress={() => startChat(user)}>
             <Circle
               style={{
