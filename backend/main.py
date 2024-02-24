@@ -1,11 +1,22 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import json
 from passlib.context import CryptContext
+from dotenv import load_dotenv
+import os
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from typing import Annotated
+from jose import JWTError, jwt
+
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 app = FastAPI()
 
 origins = [
@@ -25,14 +36,10 @@ class UserInfo(BaseModel):
     username: str
     password: str
 
-class NewUserInfo(BaseModel):
-    username: str
-    password: str
+class NewUserInfo(UserInfo):
     passwordAgain: str
 
-class UserInDb(BaseModel):
-    username: str
-    password: str
+class UserInDb(UserInfo):
     friends: list[str]
 
 class UserOutDb(BaseModel):
@@ -44,10 +51,7 @@ class MessageInfo(BaseModel):
     toId: str
     content: str
 
-class Message(BaseModel):
-    fromId: str
-    toId: str
-    content: str
+class Message(MessageInfo):
     timestamp: str
 
 users = {}
