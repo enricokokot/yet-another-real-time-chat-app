@@ -36,13 +36,19 @@ const styles = StyleSheet.create({
   },
   userBubble: {
     padding: 5,
+    paddingHorizontal: 12,
     margin: 5,
     backgroundColor: "#09ADF6",
+    borderRadius: 20,
+    alignSelf: "flex-start",
+    maxWidth: "60%",
   },
   otherBubble: {
     padding: 5,
+    paddingHorizontal: 12,
     margin: 5,
-    alignItems: "flex-end",
+    borderRadius: 20,
+    alignSelf: "flex-end",
     backgroundColor: "white",
   },
   userText: {
