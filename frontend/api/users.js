@@ -1,8 +1,9 @@
-const handleUsersFetch = async (userId) => {
+const handleUsersFetch = async (userId, token) => {
   try {
     const response = await fetch(`http://127.0.0.1:8010/user/${userId}`, {
       method: "GET",
       headers: {
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
     });

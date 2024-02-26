@@ -10,7 +10,7 @@ export default function LoginForm({ onLogin }) {
     try {
       const response = await handleLogin(username, password);
       const parsedResponse = JSON.parse(response);
-      onLogin(parsedResponse.user);
+      onLogin(parsedResponse.user, parsedResponse.token.access_token);
     } catch (error) {
       console.log(error);
     }

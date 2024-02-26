@@ -9,6 +9,8 @@ import os
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Annotated
 from jose import JWTError, jwt
+import aiohttp
+import uvicorn
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -42,8 +44,13 @@ class NewUserInfo(UserInfo):
 class UserInDb(UserInfo):
     friends: list[str]
 
+class CleanUser(BaseModel):
+    username: str
+    friends: list[str]
+
 class UserOutDb(BaseModel):
     username: str
+    hashed_password: str
     friends: list[str]
 
 class MessageInfo(BaseModel):
@@ -54,6 +61,21 @@ class MessageInfo(BaseModel):
 class Message(MessageInfo):
     timestamp: str
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: str | None = None
+
+class UserOnLogin(BaseModel):
+    username: str
+    friends: list[str]
+    token: Token
+
+def hash_password(password: str):
+    return pwd_context.hash(password)
+
 users = {}
 messages = []
 unsent_messages = []
@@ -63,20 +85,53 @@ active_connections = {}
 async def root():
     return {"message": "Hello World"}
 
+def get_user(db, username: str):
+    if username in db:
+        user_dict = db[username]
+        return UserOutDb(username=user_dict.username, hashed_password=user_dict.password, friends=user_dict.friends)
+
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = TokenData(username=username)
+    except JWTError:
+        raise credentials_exception
+    user = get_user(users, username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+# @app.post("/login")
+# async def login(user: Annotated[UserOutDb, Depends(get_current_user)]):
+#     return user
+
 @app.post("/login")
 async def login(userInfo: UserInfo):
     if userInfo.username in users.keys():
         if verify_password(userInfo.password, users[userInfo.username].password):
-            returned_user = UserOutDb(username=users[userInfo.username].username,
+            returned_user = CleanUser(username=users[userInfo.username].username,
                                       friends=users[userInfo.username].friends)
-            return {
-                "message": "Login successful.",
-                "user": returned_user,
-                }
+            payload = {"username": userInfo.username, "password": userInfo.password}
+            async with aiohttp.ClientSession() as session:
+                async with session.post('http://127.0.0.1:8010/token', data=payload) as response:
+                    token = await response.json()
+                    return {
+                        "message": "Login successful.",
+                        "user": returned_user,
+                        "token": token
+                        }
         else:
             return {"message": "Login failed, incorrect password."}
     return {"message": "Login failed, user doesn't exist."}
-        
+
 @app.post("/signin")
 async def signin(userInfo: NewUserInfo):
     if userInfo.password != userInfo.passwordAgain:
@@ -85,10 +140,16 @@ async def signin(userInfo: NewUserInfo):
         return {"message": "User already exists!"}
     new_user = UserInDb(username=userInfo.username, password=hash_password(userInfo.password), friends=[])
     users[userInfo.username] = new_user
-    return {
-        "message": "User successfully created.",
-        "user": new_user,
-        }
+    new_user_for_outside = CleanUser(username=new_user.username, friends=new_user.friends)
+    payload = {"username": userInfo.username, "password": userInfo.password}
+    async with aiohttp.ClientSession() as session:
+        async with session.post('http://127.0.0.1:8010/token', data=payload) as response:
+            token = await response.json()
+            return {
+                "message": "User successfully created.",
+                "user": new_user_for_outside,
+                "token": token,
+                }
 
 @app.get("/user/{userId}")
 async def get_users(userId):
@@ -114,7 +175,7 @@ async def add_friend(requestUserId, responseUserId):
         return {"message": "User already added as friend"}    
     responseUser.friends.append(requestUserId)
 
-    incoming_user = UserOutDb(username=requestUser.username, friends=requestUser.friends)
+    incoming_user = CleanUser(username=requestUser.username, friends=requestUser.friends)
 
     return {"message": "User added as friend",
             "user": incoming_user}
@@ -179,8 +240,43 @@ async def websocket_endpoint(websocket: WebSocket):
             if value == websocket:
                 active_connections.pop(key, None)
 
-def hash_password(password: str):
-    return pwd_context.hash(password)
-
 def verify_password(plain_password: str, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def authenticate_user(fake_db, username: str, password: str):
+    user = get_user(fake_db, username)
+    if not user:
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
+    return user
+
+@app.post("/token")
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+) -> Token:
+    user = authenticate_user(users, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return Token(access_token=access_token, token_type="bearer")
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8010)
