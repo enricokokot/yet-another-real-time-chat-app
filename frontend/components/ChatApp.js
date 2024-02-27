@@ -106,6 +106,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
           currentUser={currentUser}
           connection={ws}
           inbox={inbox}
+          token={token}
         />
       </View>
     </View>

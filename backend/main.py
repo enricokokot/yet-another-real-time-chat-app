@@ -208,10 +208,11 @@ async def send_message(message: MessageInfo):
     return {"message": "Message successfully sent"}
 
 @app.get("/message/{fromId}/{toId}")
-async def get_chat(fromId, toId):
+async def get_chat(fromId: Annotated[UserOutDb, Depends(get_current_user)], toId):
     if fromId == "undefined" or toId == "undefined":
         return {"message": "Request failed, need both user ids."}
     
+    fromId = fromId.username
     chat = [message for message in list(reversed(messages)) if ((message.fromId == fromId and message.toId == toId) or (message.fromId == toId and message.toId == fromId))]
     return {"message": "Chat successfully found",
             "data": chat}
