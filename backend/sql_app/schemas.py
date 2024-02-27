@@ -1,25 +1,26 @@
 from pydantic import BaseModel
 
 
-class ItemBase(BaseModel):
-    title: str
-    description: str | None = None
+class MessageBase(BaseModel):
+    fromId: str
+    toId: str
+    content: str
 
 
-class ItemCreate(ItemBase):
+class MessageCreate(MessageBase):
     pass
 
 
-class Item(ItemBase):
+class Message(MessageBase):
     id: int
-    owner_id: int
+    timestamp: str
 
     class Config:
         orm_mode = True
 
 
 class UserBase(BaseModel):
-    email: str
+    username: str
 
 
 class UserCreate(UserBase):
@@ -28,8 +29,23 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: int
-    is_active: bool
-    items: list[Item] = []
+    friends: list[str] = []
+
+    class Config:
+        orm_mode = True
+
+
+class FriendshipBase(BaseModel):
+    userOne: str
+    userTwo: str
+
+
+class FriendshipCreate(FriendshipBase):
+    pass
+
+
+class Friendship(FriendshipBase):
+    id: int
 
     class Config:
         orm_mode = True
