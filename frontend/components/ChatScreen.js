@@ -5,7 +5,7 @@ import handleGettingChatHistory from "../api/getchat";
 import handleSendMessage from "../api/sendmessage";
 import Circle from "./Circle";
 
-const ChatScreen = ({ subject, currentUser, connection, inbox }) => {
+const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
   const inputRef = useRef();
@@ -20,7 +20,7 @@ const ChatScreen = ({ subject, currentUser, connection, inbox }) => {
       return;
     }
     try {
-      const data = await handleGettingChatHistory(user, subject);
+      const data = await handleGettingChatHistory(user, subject, token);
       const parsedData = JSON.parse(data);
       const chatHistory = parsedData.data.toReversed();
       setCurrentChat(chatHistory.map((message) => message));
@@ -45,7 +45,7 @@ const ChatScreen = ({ subject, currentUser, connection, inbox }) => {
 
     connection.send(JSON.stringify(wholeData));
 
-    await handleSendMessage(currentUser.username, subject, text);
+    await handleSendMessage(currentUser.username, subject, text, token);
     getChatHistory(currentUser.username, subject);
   };
 

@@ -1,10 +1,11 @@
-const handleUsersMakingFriends = async (requestId, responseId) => {
+const handleUsersMakingFriends = async (requestId, responseId, token) => {
   try {
     const response = await fetch(
       `http://127.0.0.1:8010/user/${requestId}/${responseId}`,
       {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       }

@@ -1,10 +1,11 @@
-const handleGettingChatHistory = async (requestId, responseId) => {
+const handleGettingChatHistory = async (requestId, responseId, token) => {
   try {
     const response = await fetch(
       `http://127.0.0.1:8010/message/${requestId}/${responseId}`,
       {
         method: "GET",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       }

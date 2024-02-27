@@ -1,4 +1,4 @@
-const handleSendMessage = async (requestId, responseId, text) => {
+const handleSendMessage = async (requestId, responseId, text, token) => {
   const data = {
     fromId: requestId,
     toId: responseId,
@@ -9,6 +9,7 @@ const handleSendMessage = async (requestId, responseId, text) => {
     const response = await fetch(`http://127.0.0.1:8010/message`, {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),

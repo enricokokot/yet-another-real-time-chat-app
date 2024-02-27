@@ -8,7 +8,7 @@ import handleUsersRemovingFriends from "../api/removefriend";
 import ChatScreen from "./ChatScreen";
 import handleOpeningWebSocket from "../api/ws";
 
-const ChatApp = ({ onLogout, currentUser }) => {
+const ChatApp = ({ onLogout, currentUser, token }) => {
   const [friends, setFriends] = useState([]);
   const [others, setOthers] = useState([]);
   const [currentSubject, setCurrentSubject] = useState("");
@@ -31,8 +31,8 @@ const ChatApp = ({ onLogout, currentUser }) => {
 
   const fetchUsers = async () => {
     try {
-      const allUsers = await handleUsersFetch();
-      const usersFriends = await handleUsersFetch(currentUser.username);
+      const allUsers = await handleUsersFetch("undefined", token);
+      const usersFriends = await handleUsersFetch(currentUser.username, token);
       const actualUsers = Array.from(JSON.parse(allUsers));
       const actualFriends = Array.from(JSON.parse(usersFriends));
 
@@ -52,7 +52,7 @@ const ChatApp = ({ onLogout, currentUser }) => {
 
   const addFriend = async (user) => {
     try {
-      await handleUsersMakingFriends(currentUser.username, user);
+      await handleUsersMakingFriends(currentUser.username, user, token);
       fetchUsers();
     } catch (error) {
       console.log(error);
@@ -61,7 +61,7 @@ const ChatApp = ({ onLogout, currentUser }) => {
 
   const removeFriend = async (user) => {
     try {
-      await handleUsersRemovingFriends(currentUser.username, user);
+      await handleUsersRemovingFriends(currentUser.username, user, token);
       fetchUsers();
     } catch (error) {
       console.log(error);
@@ -106,6 +106,7 @@ const ChatApp = ({ onLogout, currentUser }) => {
           currentUser={currentUser}
           connection={ws}
           inbox={inbox}
+          token={token}
         />
       </View>
     </View>

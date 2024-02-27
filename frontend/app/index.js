@@ -8,9 +8,11 @@ import ChatApp from "../components/ChatApp";
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState({});
+  const [token, setToken] = useState("");
 
-  const handleLogin = (currentUser) => {
+  const handleLogin = (currentUser, token) => {
     setCurrentUser(currentUser);
+    setToken(token);
     setIsLoggedIn(true);
   };
 
@@ -23,7 +25,11 @@ export default function App() {
     <SafeAreaView style={styles.topContainer}>
       {isLoggedIn ? (
         <>
-          <ChatApp onLogout={handleLogout} currentUser={currentUser} />
+          <ChatApp
+            onLogout={handleLogout}
+            currentUser={currentUser}
+            token={token}
+          />
         </>
       ) : (
         <View style={styles.container}>
