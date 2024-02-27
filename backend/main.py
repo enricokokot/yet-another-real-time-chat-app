@@ -73,9 +73,6 @@ class UserOnLogin(BaseModel):
     friends: list[str]
     token: Token
 
-def hash_password(password: str):
-    return pwd_context.hash(password)
-
 users = {}
 messages = []
 unsent_messages = []
@@ -239,6 +236,9 @@ async def websocket_endpoint(websocket: WebSocket):
         for key, value in dict(active_connections).items():
             if value == websocket:
                 active_connections.pop(key, None)
+
+def hash_password(password: str):
+    return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
