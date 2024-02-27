@@ -45,7 +45,7 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
 
     connection.send(JSON.stringify(wholeData));
 
-    await handleSendMessage(currentUser.username, subject, text);
+    await handleSendMessage(currentUser.username, subject, text, token);
     getChatHistory(currentUser.username, subject);
   };
 

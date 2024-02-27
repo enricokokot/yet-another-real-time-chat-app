@@ -109,10 +109,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         raise credentials_exception
     return user
 
-# @app.post("/login")
-# async def login(user: Annotated[UserOutDb, Depends(get_current_user)]):
-#     return user
-
 @app.post("/login")
 async def login(userInfo: UserInfo):
     if userInfo.username in users.keys():
@@ -152,15 +148,17 @@ async def signin(userInfo: NewUserInfo):
                 }
 
 @app.get("/user/{userId}")
-async def get_users(userId):
+async def get_users(the_user: Annotated[UserOutDb, Depends(get_current_user)], userId):
+    the_user_id = the_user.username
     if users == {}:
         return []
     if userId == "undefined":
         return [user for user in users]
-    return users[userId].friends
+    return users[the_user_id].friends
 
 @app.post("/user/{requestUserId}/{responseUserId}")
-async def add_friend(requestUserId, responseUserId):
+async def add_friend(requestUserId: Annotated[UserOutDb, Depends(get_current_user)], responseUserId):
+    requestUserId = requestUserId.username
     if requestUserId == "undefined" or responseUserId == "undefined":
         return {"message": "Request failed, need both user ids."}
 
@@ -181,7 +179,8 @@ async def add_friend(requestUserId, responseUserId):
             "user": incoming_user}
 
 @app.delete("/user/{requestUserId}/{responseUserId}")
-async def remove_friend(requestUserId, responseUserId):
+async def remove_friend(requestUserId: Annotated[UserOutDb, Depends(get_current_user)], responseUserId):
+    requestUserId = requestUserId.username
     if requestUserId == "undefined" or responseUserId == "undefined":
         return {"message": "Request failed, need both user ids."}
 
@@ -193,14 +192,14 @@ async def remove_friend(requestUserId, responseUserId):
     if requestUserId in responseUser.friends:        
         responseUser.friends.remove(requestUserId)
 
-    incoming_user = UserOutDb(username=requestUser.username, friends=requestUser.friends)
+    incoming_user = CleanUser(username=requestUser.username, friends=requestUser.friends)
 
     return {"message": "User removed as friend",
             "user": incoming_user}
 
 @app.post("/message")
-async def send_message(message: MessageInfo):
-    new_message = Message(fromId=message.fromId,
+async def send_message(user: Annotated[UserOutDb, Depends(get_current_user)], message: MessageInfo):
+    new_message = Message(fromId=user.username,
                           toId=message.toId,
                           content=message.content,
                           timestamp=str(datetime.now()))
