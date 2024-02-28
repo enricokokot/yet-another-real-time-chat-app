@@ -27,28 +27,12 @@ def create_user(db: Session, user: schemas.UserCreate):
     return db_user
 
 
-def get_friendships(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Friendship).offset(skip).limit(limit).all()
-
-
-def create_friendship(db: Session, requestUserId: int, responseUserId: int):
-    db_friendship = models.Friendship(userOne=requestUserId, userTwo=responseUserId)
-    db.add(db_friendship)
+def create_friendship(db: Session, requestUser: models.User, responseUser: models.User):
+    requestUser.friends.append(responseUser)
     db.commit()
-    db.refresh(db_friendship)
-    return db_friendship
+    db.refresh(requestUser)
+    return requestUser
 
-
-def get_messages(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Message).offset(skip).limit(limit).all()
-
-
-def create_message(db: Session, message: schemas.Message, user_id: int):
-    db_message = models.Message(**message.dict(), owner_id=user_id)
-    db.add(db_message)
-    db.commit()
-    db.refresh(db_message)
-    return db_message
 
 def hash_password(password: str):
     return pwd_context.hash(password)

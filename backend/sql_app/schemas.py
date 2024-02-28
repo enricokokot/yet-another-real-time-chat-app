@@ -1,22 +1,5 @@
 from pydantic import BaseModel
-
-
-class MessageBase(BaseModel):
-    fromId: str
-    toId: str
-    content: str
-
-
-class MessageCreate(MessageBase):
-    pass
-
-
-class Message(MessageBase):
-    id: int
-    timestamp: str
-
-    class Config:
-        orm_mode = True
+from typing import List
 
 
 class UserBase(BaseModel):
@@ -29,23 +12,7 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: int
-    friends: list[str] = []
-
-    class Config:
-        orm_mode = True
-
-
-class FriendshipBase(BaseModel):
-    userOne: str
-    userTwo: str
-
-
-class FriendshipCreate(FriendshipBase):
-    pass
-
-
-class Friendship(FriendshipBase):
-    id: int
+    friends: List[UserBase] = []
 
     class Config:
         orm_mode = True

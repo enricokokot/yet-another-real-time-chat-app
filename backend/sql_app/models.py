@@ -1,6 +1,13 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Table
 
 from database import Base
+from sqlalchemy.orm import relationship
+
+
+friendship_association = Table('friendship', Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('friend_id', Integer, ForeignKey('users.id'))
+)
 
 
 class User(Base):
@@ -10,20 +17,10 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     password = Column(String)
 
-
-class Message(Base):
-    __tablename__ = "messages"
-
-    id = Column(Integer, primary_key=True)
-    fromId = Column(String, index=True)
-    toId = Column(String, index=True)
-    content = Column(String)
-    timestamp = Column(String)
-
-
-class Friendship(Base):
-    __tablename__ = "friendships"
-
-    id = Column(Integer, primary_key=True)
-    userOne = Column(String, ForeignKey("users.id"))
-    userTwo = Column(String, ForeignKey("users.id"))
+    friends = relationship(
+        "User",
+        secondary=friendship_association,
+        primaryjoin=id==friendship_association.c.user_id,
+        secondaryjoin=id==friendship_association.c.friend_id,
+        backref="users"
+    )

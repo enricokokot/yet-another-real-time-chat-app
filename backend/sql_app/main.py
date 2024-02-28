@@ -21,7 +21,7 @@ def get_db():
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_username(db, username=user.username)
     if db_user:
-        raise HTTPException(status_code=400, detail="Usename already registered")
+        raise HTTPException(status_code=400, detail="Username already registered")
     return crud.create_user(db=db, user=user)
 
 
@@ -39,23 +39,15 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
     return db_user
 
 
-@app.get("/friendship/", response_model=list[schemas.Friendship])
-def read_friendships(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = crud.get_friendships(db, skip=skip, limit=limit)
-    return users
-
-
 @app.post("/user/{requestUserId}/{responseUserId}")
-def create_friendship(
-    requestUserId=int, responseUserId=int, db: Session = Depends(get_db)
-):
-    return crud.create_friendship(db=db, requestUserId=requestUserId, responseUserId=responseUserId)
+async def add_friend(requestUserId, responseUserId, db: Session = Depends(get_db)):
+    requestUser = crud.get_user_by_username(db, username=requestUserId)
+    responseUser = crud.get_user_by_username(db, username=responseUserId)
+    if requestUser is None or responseUser is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    newUser = crud.create_friendship(db, requestUser, responseUser)
+    return newUser
 
-
-@app.get("/message/", response_model=list[schemas.Message])
-def read_messages(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    messages = crud.get_messages(db, skip=skip, limit=limit)
-    return messages
 
 import uvicorn
 
