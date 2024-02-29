@@ -59,6 +59,33 @@ async def remove_friend(requestUserId, responseUserId, db: Session = Depends(get
     return newUser
 
 
+@app.post("/message/")
+async def create_message(message: schemas.MessageCreate, db: Session = Depends(get_db)):
+    from_user = crud.get_user(db, user_id=message.fromId)
+    to_user = crud.get_user(db, user_id=message.toId)
+    if from_user is None or to_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    if from_user == to_user:
+        raise HTTPException(status_code=400, detail="Cannot send message to self")
+    return crud.create_message(db=db, message=message)
+
+
+@app.get("/message/")
+async def read_messages(db: Session = Depends(get_db)):
+    return crud.get_messages(db)
+
+
+@app.get("/message/{fromId}/{toId}")
+async def read_messages_from_chat(fromId, toId, db: Session = Depends(get_db)):
+    from_user = crud.get_user_by_username(db, username=fromId)
+    to_user = crud.get_user_by_username(db, username=toId)
+    if from_user is None or to_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    if from_user == to_user:
+        raise HTTPException(status_code=400, detail="Cannot send message to self")
+    return crud.get_messages_from_chat(db, from_user.id, to_user.id)
+
+
 import uvicorn
 
 if __name__ == "__main__":

@@ -24,3 +24,16 @@ class User(Base):
         secondaryjoin=id==friendship_association.c.friend_id,
         backref="users"
     )
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True)
+    fromId = Column(Integer, ForeignKey('users.id'))
+    toId = Column(Integer, ForeignKey('users.id'))
+    content = Column(String)
+    timestamp = Column(String)
+
+    from_user = relationship("User", foreign_keys=[fromId])
+    to_user = relationship("User", foreign_keys=[toId])

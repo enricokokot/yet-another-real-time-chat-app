@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
+from datetime import datetime
+from sqlalchemy import or_, and_
 
 import models, schemas
 
@@ -48,6 +50,27 @@ def delete_friendship(db: Session, requestUser: models.User, responseUser: model
     db.refresh(requestUser)
     db.refresh(responseUser)
     return requestUser
+
+
+def create_message(db: Session, message: schemas.MessageCreate):
+    db_message = models.Message(**message.dict(), timestamp=str(datetime.now()))
+    db.add(db_message)
+    db.commit()
+    db.refresh(db_message)
+    return db_message
+
+
+def get_messages(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Message).offset(skip).limit(limit).all()
+
+
+def get_messages_from_chat(db: Session, fromId: int, toId: int):
+    return db.query(models.Message).filter(
+        or_(
+            and_(models.Message.fromId == fromId, models.Message.toId == toId),
+            and_(models.Message.fromId == toId, models.Message.toId == fromId)
+        )
+    ).order_by(models.Message.timestamp.desc()).all()
 
 
 def hash_password(password: str):
