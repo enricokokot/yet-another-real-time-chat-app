@@ -1,11 +1,26 @@
-from fastapi import Depends, FastAPI, HTTPException
+from typing import Annotated
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta, timezone
+from jose import jwt, JWTError
+from dotenv import load_dotenv
+import os
+import aiohttp
 
 import crud, models, schemas
 from database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 app = FastAPI()
 
 
@@ -84,6 +99,85 @@ async def read_messages_from_chat(fromId, toId, db: Session = Depends(get_db)):
     if from_user == to_user:
         raise HTTPException(status_code=400, detail="Cannot send message to self")
     return crud.get_messages_from_chat(db, from_user.id, to_user.id)
+
+
+def verify_password(plain_password: str, hashed_password: str):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def authenticate_user(username: str, password: str, db: Session = Depends(get_db)):
+    user = crud.get_user_by_username(db, username)
+    if not user:
+        return False
+    if not verify_password(password, user.password):
+        return False
+    return user
+
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+@app.post("/token")
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+) -> schemas.Token:
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return schemas.Token(access_token=access_token, token_type="bearer")
+
+
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = schemas.TokenData(username=username)
+    except JWTError:
+        raise credentials_exception
+    user = crud.get_user_by_username(db, username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+
+@app.post("/signin")
+async def signin(userInfo: schemas.NewUserInfo):
+    if userInfo.password != userInfo.passwordAgain:
+        return {"message": "Passwords are not equal!"}
+    payload = {"username": userInfo.username, "password": userInfo.password}
+    async with aiohttp.ClientSession() as session:
+        async with session.post('http://127.0.0.1:8010/user/', json=payload) as response:
+            new_user = await response.json()
+            async with session.post('http://127.0.0.1:8010/token', data=payload) as response:
+                token = await response.json()
+                return {
+                    "message": "User successfully created.",
+                    "user": new_user,
+                    "token": token,
+                    }
 
 
 import uvicorn
