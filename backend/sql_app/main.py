@@ -49,6 +49,16 @@ async def add_friend(requestUserId, responseUserId, db: Session = Depends(get_db
     return newUser
 
 
+@app.delete("/user/{requestUserId}/{responseUserId}")
+async def remove_friend(requestUserId, responseUserId, db: Session = Depends(get_db)):
+    requestUser = crud.get_user_by_username(db, username=requestUserId)
+    responseUser = crud.get_user_by_username(db, username=responseUserId)
+    if requestUser is None or responseUser is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    newUser = crud.delete_friendship(db, requestUser, responseUser)
+    return newUser
+
+
 import uvicorn
 
 if __name__ == "__main__":

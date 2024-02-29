@@ -28,9 +28,25 @@ def create_user(db: Session, user: schemas.UserCreate):
 
 
 def create_friendship(db: Session, requestUser: models.User, responseUser: models.User):
-    requestUser.friends.append(responseUser)
+    if requestUser == responseUser:
+        return requestUser
+    if responseUser not in requestUser.friends:
+        requestUser.friends.append(responseUser)
+    if requestUser not in responseUser.friends:
+        responseUser.friends.append(requestUser)
     db.commit()
     db.refresh(requestUser)
+    db.refresh(responseUser)
+    return requestUser
+
+def delete_friendship(db: Session, requestUser: models.User, responseUser: models.User):
+    if responseUser in requestUser.friends:
+        requestUser.friends.remove(responseUser)
+    if requestUser in responseUser.friends:
+        responseUser.friends.remove(requestUser)
+    db.commit()
+    db.refresh(requestUser)
+    db.refresh(responseUser)
     return requestUser
 
 
