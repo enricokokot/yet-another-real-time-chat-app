@@ -168,16 +168,12 @@ async def signin(userInfo: schemas.NewUserInfo):
     if userInfo.password != userInfo.passwordAgain:
         return {"message": "Passwords are not equal!"}
     payload = {"username": userInfo.username, "password": userInfo.password}
+
     async with aiohttp.ClientSession() as session:
         async with session.post('http://127.0.0.1:8010/user/', json=payload) as response:
             new_user = await response.json()
-            async with session.post('http://127.0.0.1:8010/token', data=payload) as response:
-                token = await response.json()
-                return {
-                    "message": "User successfully created.",
-                    "user": new_user,
-                    "token": token,
-                    }
+
+    return {"message": "User successfully created.", "user": new_user}
 
 
 import uvicorn
