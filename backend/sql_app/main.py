@@ -32,6 +32,26 @@ def get_db():
         db.close()
 
 
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = schemas.TokenData(username=username)
+    except JWTError:
+        raise credentials_exception
+    user = crud.get_user_by_username(db, username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+
 @app.post("/user/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_username(db, username=user.username)
@@ -41,13 +61,13 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/user/", response_model=list[schemas.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def read_users(the_user: Annotated[schemas.User, Depends(get_current_user)], skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = crud.get_users(db, skip=skip, limit=limit)
     return users
 
 
 @app.get("/user/{user_id}", response_model=schemas.User)
-def read_user(user_id: int, db: Session = Depends(get_db)):
+def read_user(the_user: Annotated[schemas.User, Depends(get_current_user)], user_id: int, db: Session = Depends(get_db)):
     db_user = crud.get_user(db, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -55,7 +75,7 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/user/{requestUserId}/{responseUserId}")
-async def add_friend(requestUserId, responseUserId, db: Session = Depends(get_db)):
+async def add_friend(the_user: Annotated[schemas.User, Depends(get_current_user)], requestUserId, responseUserId, db: Session = Depends(get_db)):
     requestUser = crud.get_user_by_username(db, username=requestUserId)
     responseUser = crud.get_user_by_username(db, username=responseUserId)
     if requestUser is None or responseUser is None:
@@ -65,7 +85,7 @@ async def add_friend(requestUserId, responseUserId, db: Session = Depends(get_db
 
 
 @app.delete("/user/{requestUserId}/{responseUserId}")
-async def remove_friend(requestUserId, responseUserId, db: Session = Depends(get_db)):
+async def remove_friend(the_user: Annotated[schemas.User, Depends(get_current_user)], requestUserId, responseUserId, db: Session = Depends(get_db)):
     requestUser = crud.get_user_by_username(db, username=requestUserId)
     responseUser = crud.get_user_by_username(db, username=responseUserId)
     if requestUser is None or responseUser is None:
@@ -75,7 +95,7 @@ async def remove_friend(requestUserId, responseUserId, db: Session = Depends(get
 
 
 @app.post("/message/")
-async def create_message(message: schemas.MessageCreate, db: Session = Depends(get_db)):
+async def create_message(the_user: Annotated[schemas.User, Depends(get_current_user)], message: schemas.MessageCreate, db: Session = Depends(get_db)):
     from_user = crud.get_user(db, user_id=message.fromId)
     to_user = crud.get_user(db, user_id=message.toId)
     if from_user is None or to_user is None:
@@ -86,12 +106,12 @@ async def create_message(message: schemas.MessageCreate, db: Session = Depends(g
 
 
 @app.get("/message/")
-async def read_messages(db: Session = Depends(get_db)):
+async def read_messages(the_user: Annotated[schemas.User, Depends(get_current_user)], db: Session = Depends(get_db)):
     return crud.get_messages(db)
 
 
 @app.get("/message/{fromId}/{toId}")
-async def read_messages_from_chat(fromId, toId, db: Session = Depends(get_db)):
+async def read_messages_from_chat(the_user: Annotated[schemas.User, Depends(get_current_user)], fromId, toId, db: Session = Depends(get_db)):
     from_user = crud.get_user_by_username(db, username=fromId)
     to_user = crud.get_user_by_username(db, username=toId)
     if from_user is None or to_user is None:
@@ -127,9 +147,10 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 @app.post("/token")
 async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: Session = Depends(get_db)
 ) -> schemas.Token:
-    user = authenticate_user(form_data.username, form_data.password)
+    user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -141,26 +162,6 @@ async def login_for_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     return schemas.Token(access_token=access_token, token_type="bearer")
-
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-        token_data = schemas.TokenData(username=username)
-    except JWTError:
-        raise credentials_exception
-    user = crud.get_user_by_username(db, username=token_data.username)
-    if user is None:
-        raise credentials_exception
-    return user
 
 
 @app.post("/signin")
