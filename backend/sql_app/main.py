@@ -177,6 +177,19 @@ async def signin(userInfo: schemas.NewUserInfo):
     return {"message": "User successfully created.", "user": new_user}
 
 
+
+@app.post("/login")
+async def login(userInfo: schemas.UserInfo):
+    payload = {"username": userInfo.username, "password": userInfo.password}
+    async with aiohttp.ClientSession() as session:
+        async with session.post('http://127.0.0.1:8010/token', data=payload) as response:
+            token = await response.json()
+            return {
+                "message": "Login successful.",
+                "token": token
+                }
+
+
 import uvicorn
 
 if __name__ == "__main__":
