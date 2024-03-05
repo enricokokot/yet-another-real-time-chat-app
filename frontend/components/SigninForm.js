@@ -1,6 +1,7 @@
 import React from "react";
 import { Button, SafeAreaView, StyleSheet, TextInput } from "react-native";
 import handleSignin from "../api/signin";
+import handleLogin from "../api/login";
 
 export default function SigninForm({ onLogin }) {
   const [username, setUsername] = React.useState("");
@@ -11,7 +12,9 @@ export default function SigninForm({ onLogin }) {
     try {
       const response = await handleSignin(username, password, passwordAgain);
       const parsedResponse = JSON.parse(response);
-      onLogin(parsedResponse.user, parsedResponse.token.access_token);
+      const tokenResponse = await handleLogin(username, password);
+      const parsedTokenResponse = JSON.parse(tokenResponse);
+      onLogin(parsedResponse.user, parsedTokenResponse.token.access_token);
     } catch (error) {
       console.log(error);
     }

@@ -4,6 +4,7 @@ import ChatHistory from "./ChatHistory";
 import handleGettingChatHistory from "../api/getchat";
 import handleSendMessage from "../api/sendmessage";
 import Circle from "./Circle";
+import handleUsersFetch from "../api/users";
 
 const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
   const [text, onChangeText] = useState("");
@@ -22,7 +23,7 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
     try {
       const data = await handleGettingChatHistory(user, subject, token);
       const parsedData = JSON.parse(data);
-      const chatHistory = parsedData.data.toReversed();
+      const chatHistory = parsedData.toReversed();
       setCurrentChat(chatHistory.map((message) => message));
     } catch (error) {
       console.log(error);
@@ -45,17 +46,20 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
 
     connection.send(JSON.stringify(wholeData));
 
-    await handleSendMessage(currentUser.username, subject, text, token);
+    const allUsers = await handleUsersFetch("undefined", token);
+    const theExactUserIdWeAreLookingFor = JSON.parse(allUsers).filter(
+      (user) => user.username === subject
+    )[0].id;
+    const subjectId = theExactUserIdWeAreLookingFor;
+
+    await handleSendMessage(currentUser.id, subjectId, text, token);
     getChatHistory(currentUser.username, subject);
   };
 
   return (
     subject && (
       <View style={styles.container}>
-        <ChatHistory
-          currentUser={currentUser.username}
-          currentChat={currentChat}
-        />
+        <ChatHistory currentUser={currentUser.id} currentChat={currentChat} />
         <View style={styles.sender}>
           <View style={styles.inputContainer}>
             <TextInput

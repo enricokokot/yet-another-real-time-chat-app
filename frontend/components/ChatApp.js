@@ -32,10 +32,12 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const fetchUsers = async () => {
     try {
       const allUsers = await handleUsersFetch("undefined", token);
-      const usersFriends = await handleUsersFetch(currentUser.username, token);
-      const actualUsers = Array.from(JSON.parse(allUsers));
-      const actualFriends = Array.from(JSON.parse(usersFriends));
-
+      const actualUsers = Array.from(JSON.parse(allUsers)).map(
+        (user) => user.username
+      );
+      const actualFriends = currentUser.friends.map(
+        (friend) => friend.username
+      );
       const usersBesideCurrentUser = actualUsers.filter(
         (user) => user != currentUser.username
       );
@@ -52,8 +54,9 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
 
   const addFriend = async (user) => {
     try {
+      setFriends([...friends, user]);
+      setOthers(others.filter((other) => other !== user));
       await handleUsersMakingFriends(currentUser.username, user, token);
-      fetchUsers();
     } catch (error) {
       console.log(error);
     }
@@ -61,8 +64,9 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
 
   const removeFriend = async (user) => {
     try {
+      setFriends(friends.filter((friend) => friend !== user));
+      setOthers([...others, user]);
       await handleUsersRemovingFriends(currentUser.username, user, token);
-      fetchUsers();
     } catch (error) {
       console.log(error);
     }
