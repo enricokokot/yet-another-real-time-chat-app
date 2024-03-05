@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
@@ -9,6 +9,7 @@ from jose import jwt, JWTError
 from dotenv import load_dotenv
 import os
 import aiohttp
+import json
 
 import crud, models, schemas
 from database import SessionLocal, engine
@@ -202,6 +203,35 @@ async def login(userInfo: schemas.UserInfo):
                 "message": "Login successful.",
                 "token": token
                 }
+
+
+active_connections = {}
+unsent_messages = []
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            loaded_data = json.loads(data)
+            if loaded_data["type"] == "connection":
+                    active_connections[loaded_data["data"]["user"]] = websocket
+                    for message in list(unsent_messages):
+                        if message["data"]["toId"] == loaded_data["data"]["user"]:
+                            await websocket.send_text(json.dumps(message))
+                            unsent_messages.remove(message)
+            if loaded_data["type"] == "message":
+                if loaded_data["data"]["toId"] in active_connections.keys():
+                    await active_connections[loaded_data["data"]["toId"]].send_text(json.dumps(loaded_data))
+                else:
+                    unsent_messages.append(loaded_data)
+    except:
+        for key, value in dict(active_connections).items():
+            if value == websocket:
+                active_connections.pop(key, None)
 
 
 import uvicorn
