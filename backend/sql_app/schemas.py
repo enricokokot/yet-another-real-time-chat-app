@@ -53,3 +53,9 @@ class UserInfo(BaseModel):
 
 class NewUserInfo(UserInfo):
     passwordAgain: str
+
+class UnreadMessage(BaseModel):
+    message_id: int
+
+    class Config:
+        orm_mode = True

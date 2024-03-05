@@ -73,5 +73,23 @@ def get_messages_from_chat(db: Session, fromId: int, toId: int):
     ).order_by(models.Message.timestamp.desc()).all()
 
 
+def create_unread_message(db: Session, message_id: int):
+    db_unread_message = models.UnreadMessage(message_id=message_id)
+    db.add(db_unread_message)
+    db.commit()
+    db.refresh(db_unread_message)
+    return db_unread_message
+
+
+def get_unread_messages(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Message).join(models.UnreadMessage).offset(skip).limit(limit).all()
+
+
+def delete_unread_message(db: Session, message_id: int):
+    db.query(models.UnreadMessage).filter(models.UnreadMessage.message_id == message_id).delete()
+    db.commit()
+    return message_id
+
+
 def hash_password(password: str):
     return pwd_context.hash(password)

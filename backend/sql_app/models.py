@@ -37,3 +37,8 @@ class Message(Base):
 
     from_user = relationship("User", foreign_keys=[fromId])
     to_user = relationship("User", foreign_keys=[toId])
+
+class UnreadMessage(Base):
+    __tablename__ = "unread"
+
+    message_id = Column(Integer, ForeignKey('messages.id'), primary_key=True)

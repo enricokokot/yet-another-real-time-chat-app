@@ -206,11 +206,10 @@ async def login(userInfo: schemas.UserInfo):
 
 
 active_connections = {}
-unsent_messages = []
 
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
     await websocket.accept()
 
     try:
@@ -219,15 +218,18 @@ async def websocket_endpoint(websocket: WebSocket):
             loaded_data = json.loads(data)
             if loaded_data["type"] == "connection":
                     active_connections[loaded_data["data"]["user"]] = websocket
-                    for message in list(unsent_messages):
-                        if message["data"]["toId"] == loaded_data["data"]["user"]:
-                            await websocket.send_text(json.dumps(message))
-                            unsent_messages.remove(message)
+                    all_unreads = crud.get_unread_messages(db)
+                    for unread_message in all_unreads:
+                        if unread_message.toId == loaded_data["data"]["user"]:
+                            websocket.send_text(json.dumps(unread_message))
+                            crud.delete_unread_message(db, unread_message.id)
+
             if loaded_data["type"] == "message":
                 if loaded_data["data"]["toId"] in active_connections.keys():
                     await active_connections[loaded_data["data"]["toId"]].send_text(json.dumps(loaded_data))
                 else:
-                    unsent_messages.append(loaded_data)
+                    all_messages = crud.get_messages(db, 0, 1000)
+                    crud.create_unread_message(db, len(all_messages) + 1)
     except:
         for key, value in dict(active_connections).items():
             if value == websocket:

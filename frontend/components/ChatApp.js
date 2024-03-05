@@ -16,7 +16,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const [inbox, setInbox] = useState([]);
 
   const openWebSocket = () => {
-    const ws = handleOpeningWebSocket(currentUser.username, setInbox);
+    const ws = handleOpeningWebSocket(currentUser.id, setInbox);
     setWs(ws);
   };
 
