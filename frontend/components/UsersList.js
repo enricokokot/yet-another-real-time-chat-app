@@ -46,7 +46,7 @@ const UsersList = ({
               content={"+"}
             />
           </Pressable>
-          {inbox.filter((msg) => msg.fromId === user.id).length !== 0 &&
+          {inbox.filter((msg) => msg.data.fromId === user.id).length !== 0 &&
             user.id !== currentSubject.id && (
               <Circle
                 style={[
@@ -58,9 +58,7 @@ const UsersList = ({
                   },
                 ]}
                 content={
-                  currentSubject.id === user.id
-                    ? 0
-                    : inbox.filter((msg) => msg.fromId === user.id).length
+                  inbox.filter((msg) => msg.data.fromId === user.id).length
                 }
               />
             )}

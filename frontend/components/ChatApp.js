@@ -27,7 +27,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
 
   useEffect(() => {
     setInbox(
-      inbox.filter((message) => message.fromId !== currentSubject.username)
+      inbox.filter((message) => message.data.fromId !== currentSubject.id)
     );
   }, [currentSubject]);
 
