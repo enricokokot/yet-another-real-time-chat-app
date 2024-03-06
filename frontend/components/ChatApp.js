@@ -14,9 +14,15 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const [currentSubject, setCurrentSubject] = useState("");
   const [ws, setWs] = useState(null);
   const [inbox, setInbox] = useState([]);
+  const [unknownInInbox, setUnknownInInbox] = useState(false);
 
   const openWebSocket = () => {
-    const ws = handleOpeningWebSocket(currentUser.id, setInbox);
+    const ws = handleOpeningWebSocket(
+      currentUser.id,
+      setInbox,
+      [...friends, ...others],
+      setUnknownInInbox
+    );
     setWs(ws);
   };
 
@@ -30,6 +36,10 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
       inbox.filter((message) => message.data.fromId !== currentSubject.id)
     );
   }, [currentSubject]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [unknownInInbox]);
 
   const fetchUsers = async () => {
     try {
