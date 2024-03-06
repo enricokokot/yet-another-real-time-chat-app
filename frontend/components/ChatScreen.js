@@ -4,7 +4,6 @@ import ChatHistory from "./ChatHistory";
 import handleGettingChatHistory from "../api/getchat";
 import handleSendMessage from "../api/sendmessage";
 import Circle from "./Circle";
-import handleUsersFetch from "../api/users";
 
 const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
   const [text, onChangeText] = useState("");
@@ -12,7 +11,7 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
   const inputRef = useRef();
 
   useEffect(() => {
-    getChatHistory(currentUser.username, subject);
+    getChatHistory(currentUser.username, subject.username);
   }, [subject, inbox]);
 
   const getChatHistory = async (user, subject) => {
@@ -32,8 +31,8 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
 
   const handleSend = async () => {
     const data = {
-      fromId: currentUser.username,
-      toId: subject,
+      fromId: currentUser.id,
+      toId: subject.id,
       content: text,
     };
 
@@ -46,14 +45,8 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
 
     connection.send(JSON.stringify(wholeData));
 
-    const allUsers = await handleUsersFetch("undefined", token);
-    const theExactUserIdWeAreLookingFor = JSON.parse(allUsers).filter(
-      (user) => user.username === subject
-    )[0].id;
-    const subjectId = theExactUserIdWeAreLookingFor;
-
-    await handleSendMessage(currentUser.id, subjectId, text, token);
-    getChatHistory(currentUser.username, subject);
+    await handleSendMessage(currentUser.id, subject.id, text, token);
+    getChatHistory(currentUser.username, subject.username);
   };
 
   return (

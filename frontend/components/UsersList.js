@@ -11,11 +11,14 @@ const UsersList = ({
   return (
     <>
       {users.map((user) => (
-        <View key={user} style={styles.container}>
+        <View key={user.id} style={styles.container}>
           <Circle
-            content={user}
+            content={user.username}
             style={
-              user === currentSubject && { borderWidth: 2, borderColor: "#000" }
+              user.id === currentSubject.id && {
+                borderWidth: 2,
+                borderColor: "#000",
+              }
             }
           />
           <Pressable style={styles.bottomLeft} onPress={() => startChat(user)}>
@@ -43,8 +46,8 @@ const UsersList = ({
               content={"+"}
             />
           </Pressable>
-          {inbox.filter((msg) => msg.data.fromId.includes(user)).length !== 0 &&
-            user !== currentSubject && (
+          {inbox.filter((msg) => msg.fromId === user.id).length !== 0 &&
+            user.id !== currentSubject.id && (
               <Circle
                 style={[
                   styles.topRight,
@@ -55,10 +58,9 @@ const UsersList = ({
                   },
                 ]}
                 content={
-                  currentSubject === user
+                  currentSubject.id === user.id
                     ? 0
-                    : inbox.filter((msg) => msg.data.fromId.includes(user))
-                        .length
+                    : inbox.filter((msg) => msg.fromId === user.id).length
                 }
               />
             )}

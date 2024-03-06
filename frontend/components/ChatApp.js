@@ -26,23 +26,24 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   }, []);
 
   useEffect(() => {
-    setInbox(inbox.filter((message) => message.data.fromId !== currentSubject));
+    setInbox(
+      inbox.filter((message) => message.fromId !== currentSubject.username)
+    );
   }, [currentSubject]);
 
   const fetchUsers = async () => {
     try {
       const allUsers = await handleUsersFetch("undefined", token);
-      const actualUsers = Array.from(JSON.parse(allUsers)).map(
-        (user) => user.username
-      );
-      const actualFriends = currentUser.friends.map(
-        (friend) => friend.username
-      );
+      const actualUsers = Array.from(JSON.parse(allUsers));
+      const actualFriends = currentUser.friends;
       const usersBesideCurrentUser = actualUsers.filter(
-        (user) => user != currentUser.username
+        (user) => user.username !== currentUser.username
       );
       const userOthers = usersBesideCurrentUser.filter(
-        (user) => !actualFriends.includes(user)
+        (user) =>
+          !actualFriends
+            .map((friend) => friend.username)
+            .includes(user.username)
       );
 
       setFriends(actualFriends);
@@ -55,8 +56,12 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const addFriend = async (user) => {
     try {
       setFriends([...friends, user]);
-      setOthers(others.filter((other) => other !== user));
-      await handleUsersMakingFriends(currentUser.username, user, token);
+      setOthers(others.filter((other) => other.username !== user.username));
+      await handleUsersMakingFriends(
+        currentUser.username,
+        user.username,
+        token
+      );
     } catch (error) {
       console.log(error);
     }
@@ -64,9 +69,13 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
 
   const removeFriend = async (user) => {
     try {
-      setFriends(friends.filter((friend) => friend !== user));
+      setFriends(friends.filter((friend) => friend.username !== user.username));
       setOthers([...others, user]);
-      await handleUsersRemovingFriends(currentUser.username, user, token);
+      await handleUsersRemovingFriends(
+        currentUser.username,
+        user.username,
+        token
+      );
     } catch (error) {
       console.log(error);
     }

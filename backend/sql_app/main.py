@@ -221,7 +221,14 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                     all_unreads = crud.get_unread_messages(db)
                     for unread_message in all_unreads:
                         if unread_message.toId == loaded_data["data"]["user"]:
-                            websocket.send_text(json.dumps(unread_message))
+                            sent_message = {
+                                "id": unread_message.id,
+                                "fromId": unread_message.fromId,
+                                "toId": unread_message.toId,
+                                "content": unread_message.content,
+                                "timestamp": unread_message.timestamp,
+                            }
+                            await websocket.send_text(json.dumps(sent_message))
                             crud.delete_unread_message(db, unread_message.id)
 
             if loaded_data["type"] == "message":
