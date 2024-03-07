@@ -11,7 +11,7 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
   const inputRef = useRef();
 
   useEffect(() => {
-    getChatHistory(currentUser.username, subject);
+    getChatHistory(currentUser.username, subject.username);
   }, [subject, inbox]);
 
   const getChatHistory = async (user, subject) => {
@@ -22,7 +22,7 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
     try {
       const data = await handleGettingChatHistory(user, subject, token);
       const parsedData = JSON.parse(data);
-      const chatHistory = parsedData.data.toReversed();
+      const chatHistory = parsedData.toReversed();
       setCurrentChat(chatHistory.map((message) => message));
     } catch (error) {
       console.log(error);
@@ -31,8 +31,8 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
 
   const handleSend = async () => {
     const data = {
-      fromId: currentUser.username,
-      toId: subject,
+      fromId: currentUser.id,
+      toId: subject.id,
       content: text,
     };
 
@@ -45,17 +45,14 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
 
     connection.send(JSON.stringify(wholeData));
 
-    await handleSendMessage(currentUser.username, subject, text, token);
-    getChatHistory(currentUser.username, subject);
+    await handleSendMessage(currentUser.id, subject.id, text, token);
+    getChatHistory(currentUser.username, subject.username);
   };
 
   return (
     subject && (
       <View style={styles.container}>
-        <ChatHistory
-          currentUser={currentUser.username}
-          currentChat={currentChat}
-        />
+        <ChatHistory currentUser={currentUser.id} currentChat={currentChat} />
         <View style={styles.sender}>
           <View style={styles.inputContainer}>
             <TextInput

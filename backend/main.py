@@ -1,16 +1,20 @@
-from fastapi import FastAPI, WebSocket, Depends, HTTPException, status
+from typing import Annotated
+from fastapi import Depends, FastAPI, HTTPException, status, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from datetime import datetime, timedelta, timezone
-import json
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+from datetime import datetime, timedelta, timezone
+from jose import jwt, JWTError
 from dotenv import load_dotenv
 import os
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from typing import Annotated
-from jose import JWTError, jwt
 import aiohttp
-import uvicorn
+import json
+
+import db.crud as crud, db.models as models, db.schemas as schemas
+from db.database import SessionLocal, engine
+
+models.Base.metadata.create_all(bind=engine)
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -34,63 +38,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class UserInfo(BaseModel):
-    username: str
-    password: str
 
-class NewUserInfo(UserInfo):
-    passwordAgain: str
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-class UserInDb(UserInfo):
-    friends: list[str]
 
-class CleanUser(BaseModel):
-    username: str
-    friends: list[str]
-
-class UserOutDb(BaseModel):
-    username: str
-    hashed_password: str
-    friends: list[str]
-
-class MessageInfo(BaseModel):
-    fromId: str
-    toId: str
-    content: str
-
-class Message(MessageInfo):
-    timestamp: str
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    username: str | None = None
-
-class UserOnLogin(BaseModel):
-    username: str
-    friends: list[str]
-    token: Token
-
-def hash_password(password: str):
-    return pwd_context.hash(password)
-
-users = {}
-messages = []
-unsent_messages = []
-active_connections = {}
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserOutDb(username=user_dict.username, hashed_password=user_dict.password, friends=user_dict.friends)
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -101,147 +58,96 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
+        token_data = schemas.TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = get_user(users, username=token_data.username)
+    user = crud.get_user_by_username(db, username=token_data.username)
     if user is None:
         raise credentials_exception
     return user
 
-@app.post("/login")
-async def login(userInfo: UserInfo):
-    if userInfo.username in users.keys():
-        if verify_password(userInfo.password, users[userInfo.username].password):
-            returned_user = CleanUser(username=users[userInfo.username].username,
-                                      friends=users[userInfo.username].friends)
-            payload = {"username": userInfo.username, "password": userInfo.password}
-            async with aiohttp.ClientSession() as session:
-                async with session.post('http://127.0.0.1:8010/token', data=payload) as response:
-                    token = await response.json()
-                    return {
-                        "message": "Login successful.",
-                        "user": returned_user,
-                        "token": token
-                        }
-        else:
-            return {"message": "Login failed, incorrect password."}
-    return {"message": "Login failed, user doesn't exist."}
 
-@app.post("/signin")
-async def signin(userInfo: NewUserInfo):
-    if userInfo.password != userInfo.passwordAgain:
-        return {"message": "Passwords are not equal!"}
-    if userInfo.username in users.keys():
-        return {"message": "User already exists!"}
-    new_user = UserInDb(username=userInfo.username, password=hash_password(userInfo.password), friends=[])
-    users[userInfo.username] = new_user
-    new_user_for_outside = CleanUser(username=new_user.username, friends=new_user.friends)
-    payload = {"username": userInfo.username, "password": userInfo.password}
-    async with aiohttp.ClientSession() as session:
-        async with session.post('http://127.0.0.1:8010/token', data=payload) as response:
-            token = await response.json()
-            return {
-                "message": "User successfully created.",
-                "user": new_user_for_outside,
-                "token": token,
-                }
+@app.post("/user/", response_model=schemas.User)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_username(db, username=user.username)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    return crud.create_user(db=db, user=user)
 
-@app.get("/user/{userId}")
-async def get_users(the_user: Annotated[UserOutDb, Depends(get_current_user)], userId):
-    the_user_id = the_user.username
-    if users == {}:
-        return []
-    if userId == "undefined":
-        return [user for user in users]
-    return users[the_user_id].friends
+
+@app.get("/user/", response_model=list[schemas.User])
+def read_users(the_user: Annotated[schemas.User, Depends(get_current_user)], skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    users = crud.get_users(db, skip=skip, limit=limit)
+    return users
+
+
+@app.get("/user/{user_id}", response_model=schemas.User)
+def read_user(the_user: Annotated[schemas.User, Depends(get_current_user)], user_id: int, db: Session = Depends(get_db)):
+    db_user = crud.get_user(db, user_id=user_id)
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
+
 
 @app.post("/user/{requestUserId}/{responseUserId}")
-async def add_friend(requestUserId: Annotated[UserOutDb, Depends(get_current_user)], responseUserId):
-    requestUserId = requestUserId.username
-    if requestUserId == "undefined" or responseUserId == "undefined":
-        return {"message": "Request failed, need both user ids."}
+async def add_friend(the_user: Annotated[schemas.User, Depends(get_current_user)], requestUserId, responseUserId, db: Session = Depends(get_db)):
+    requestUser = crud.get_user_by_username(db, username=requestUserId)
+    responseUser = crud.get_user_by_username(db, username=responseUserId)
+    if requestUser is None or responseUser is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    newUser = crud.create_friendship(db, requestUser, responseUser)
+    return newUser
 
-    requestUser = users[requestUserId]
-    responseUser = users[responseUserId]
-
-    if responseUserId in requestUser.friends:
-        return {"message": "User already added as friend"}    
-    requestUser.friends.append(responseUserId)
-
-    if requestUserId in responseUser.friends:
-        return {"message": "User already added as friend"}    
-    responseUser.friends.append(requestUserId)
-
-    incoming_user = CleanUser(username=requestUser.username, friends=requestUser.friends)
-
-    return {"message": "User added as friend",
-            "user": incoming_user}
 
 @app.delete("/user/{requestUserId}/{responseUserId}")
-async def remove_friend(requestUserId: Annotated[UserOutDb, Depends(get_current_user)], responseUserId):
-    requestUserId = requestUserId.username
-    if requestUserId == "undefined" or responseUserId == "undefined":
-        return {"message": "Request failed, need both user ids."}
+async def remove_friend(the_user: Annotated[schemas.User, Depends(get_current_user)], requestUserId, responseUserId, db: Session = Depends(get_db)):
+    requestUser = crud.get_user_by_username(db, username=requestUserId)
+    responseUser = crud.get_user_by_username(db, username=responseUserId)
+    if requestUser is None or responseUser is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    newUser = crud.delete_friendship(db, requestUser, responseUser)
+    return newUser
 
-    requestUser = users[requestUserId]
-    responseUser = users[responseUserId]
 
-    if responseUserId in requestUser.friends:
-        requestUser.friends.remove(responseUserId)
-    if requestUserId in responseUser.friends:        
-        responseUser.friends.remove(requestUserId)
+@app.post("/message/")
+async def create_message(the_user: Annotated[schemas.User, Depends(get_current_user)], message: schemas.MessageCreate, db: Session = Depends(get_db)):
+    from_user = crud.get_user(db, user_id=message.fromId)
+    to_user = crud.get_user(db, user_id=message.toId)
+    if from_user is None or to_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    if from_user == to_user:
+        raise HTTPException(status_code=400, detail="Cannot send message to self")
+    return crud.create_message(db=db, message=message)
 
-    incoming_user = CleanUser(username=requestUser.username, friends=requestUser.friends)
 
-    return {"message": "User removed as friend",
-            "user": incoming_user}
+@app.get("/message/")
+async def read_messages(the_user: Annotated[schemas.User, Depends(get_current_user)], db: Session = Depends(get_db)):
+    return crud.get_messages(db)
 
-@app.post("/message")
-async def send_message(user: Annotated[UserOutDb, Depends(get_current_user)], message: MessageInfo):
-    new_message = Message(fromId=user.username,
-                          toId=message.toId,
-                          content=message.content,
-                          timestamp=str(datetime.now()))
-    messages.append(new_message)
-    return {"message": "Message successfully sent"}
 
 @app.get("/message/{fromId}/{toId}")
-async def get_chat(fromId: Annotated[UserOutDb, Depends(get_current_user)], toId):
-    if fromId == "undefined" or toId == "undefined":
-        return {"message": "Request failed, need both user ids."}
-    
-    fromId = fromId.username
-    chat = [message for message in list(reversed(messages)) if ((message.fromId == fromId and message.toId == toId) or (message.fromId == toId and message.toId == fromId))]
-    return {"message": "Chat successfully found",
-            "data": chat}
+async def read_messages_from_chat(the_user: Annotated[schemas.User, Depends(get_current_user)], fromId, toId, db: Session = Depends(get_db)):
+    from_user = crud.get_user_by_username(db, username=fromId)
+    to_user = crud.get_user_by_username(db, username=toId)
+    if from_user is None or to_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    if from_user == to_user:
+        raise HTTPException(status_code=400, detail="Cannot send message to self")
+    return crud.get_messages_from_chat(db, from_user.id, to_user.id)
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-
-    try:
-        while True:
-            data = await websocket.receive_text()
-            loaded_data = json.loads(data)
-            if loaded_data["type"] == "connection":
-                    active_connections[loaded_data["data"]["user"]] = websocket
-                    for message in list(unsent_messages):
-                        if message["data"]["toId"] == loaded_data["data"]["user"]:
-                            await websocket.send_text(json.dumps(message))
-                            unsent_messages.remove(message)
-            if loaded_data["type"] == "message":
-                if loaded_data["data"]["toId"] in active_connections.keys():
-                    await active_connections[loaded_data["data"]["toId"]].send_text(json.dumps(loaded_data))
-                else:
-                    unsent_messages.append(loaded_data)
-    except:
-        for key, value in dict(active_connections).items():
-            if value == websocket:
-                active_connections.pop(key, None)
 
 def verify_password(plain_password: str, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
+
+
+def authenticate_user(username: str, password: str, db: Session = Depends(get_db)):
+    user = crud.get_user_by_username(db, username)
+    if not user:
+        return False
+    if not verify_password(password, user.password):
+        return False
+    return user
+
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
@@ -253,19 +159,13 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def authenticate_user(fake_db, username: str, password: str):
-    user = get_user(fake_db, username)
-    if not user:
-        return False
-    if not verify_password(password, user.hashed_password):
-        return False
-    return user
 
 @app.post("/token")
 async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
-) -> Token:
-    user = authenticate_user(users, form_data.username, form_data.password)
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: Session = Depends(get_db)
+) -> schemas.Token:
+    user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -276,7 +176,77 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    return Token(access_token=access_token, token_type="bearer")
+    return schemas.Token(access_token=access_token, token_type="bearer")
+
+
+@app.post("/signin")
+async def signin(userInfo: schemas.NewUserInfo):
+    if userInfo.password != userInfo.passwordAgain:
+        return {"message": "Passwords are not equal!"}
+    payload = {"username": userInfo.username, "password": userInfo.password}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post('http://127.0.0.1:8010/user/', json=payload) as response:
+            new_user = await response.json()
+
+    return {"message": "User successfully created.", "user": new_user}
+
+
+
+@app.post("/login")
+async def login(userInfo: schemas.UserInfo):
+    payload = {"username": userInfo.username, "password": userInfo.password}
+    async with aiohttp.ClientSession() as session:
+        async with session.post('http://127.0.0.1:8010/token', data=payload) as response:
+            token = await response.json()
+            return {
+                "message": "Login successful.",
+                "token": token
+                }
+
+
+active_connections = {}
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
+    await websocket.accept()
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            loaded_data = json.loads(data)
+            if loaded_data["type"] == "connection":
+                    active_connections[loaded_data["data"]["user"]] = websocket
+                    all_unreads = crud.get_unread_messages(db)
+                    for unread_message in all_unreads:
+                        if unread_message.toId == loaded_data["data"]["user"]:
+                            sent_message = {
+                                "type": "message",
+                                "data": {
+                                    "id": unread_message.id,
+                                    "fromId": unread_message.fromId,
+                                    "toId": unread_message.toId,
+                                    "content": unread_message.content,
+                                    "timestamp": unread_message.timestamp,
+                                }
+                            }
+                            await websocket.send_text(json.dumps(sent_message))
+                            crud.delete_unread_message(db, unread_message.id)
+
+            if loaded_data["type"] == "message":
+                if loaded_data["data"]["toId"] in active_connections.keys():
+                    await active_connections[loaded_data["data"]["toId"]].send_text(json.dumps(loaded_data))
+                else:
+                    all_messages = crud.get_messages(db, 0, 1000)
+                    crud.create_unread_message(db, len(all_messages) + 1)
+    except:
+        for key, value in dict(active_connections).items():
+            if value == websocket:
+                active_connections.pop(key, None)
+
+
+import uvicorn
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8010)

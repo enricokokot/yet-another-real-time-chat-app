@@ -27,6 +27,12 @@ const handleSignin = async (username, password, passwordAgain) => {
     }
 
     const responseData = await response.text();
+    if (
+      responseData ===
+      `{"message":"User successfully created.","user":{"detail":"Username already registered"}}`
+    ) {
+      throw new Error(`{"message":"User already exists!"}`);
+    }
 
     if (responseData == `{"message":"User already exists!"}`) {
       throw new Error(responseData);

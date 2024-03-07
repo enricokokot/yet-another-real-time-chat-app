@@ -14,9 +14,15 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const [currentSubject, setCurrentSubject] = useState("");
   const [ws, setWs] = useState(null);
   const [inbox, setInbox] = useState([]);
+  const [unknownInInbox, setUnknownInInbox] = useState(false);
 
   const openWebSocket = () => {
-    const ws = handleOpeningWebSocket(currentUser.username, setInbox);
+    const ws = handleOpeningWebSocket(
+      currentUser.id,
+      setInbox,
+      [...friends, ...others],
+      setUnknownInInbox
+    );
     setWs(ws);
   };
 
@@ -26,21 +32,28 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   }, []);
 
   useEffect(() => {
-    setInbox(inbox.filter((message) => message.data.fromId !== currentSubject));
+    setInbox(
+      inbox.filter((message) => message.data.fromId !== currentSubject.id)
+    );
   }, [currentSubject]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [unknownInInbox]);
 
   const fetchUsers = async () => {
     try {
       const allUsers = await handleUsersFetch("undefined", token);
-      const usersFriends = await handleUsersFetch(currentUser.username, token);
       const actualUsers = Array.from(JSON.parse(allUsers));
-      const actualFriends = Array.from(JSON.parse(usersFriends));
-
+      const actualFriends = currentUser.friends;
       const usersBesideCurrentUser = actualUsers.filter(
-        (user) => user != currentUser.username
+        (user) => user.username !== currentUser.username
       );
       const userOthers = usersBesideCurrentUser.filter(
-        (user) => !actualFriends.includes(user)
+        (user) =>
+          !actualFriends
+            .map((friend) => friend.username)
+            .includes(user.username)
       );
 
       setFriends(actualFriends);
@@ -52,8 +65,13 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
 
   const addFriend = async (user) => {
     try {
-      await handleUsersMakingFriends(currentUser.username, user, token);
-      fetchUsers();
+      setFriends([...friends, user]);
+      setOthers(others.filter((other) => other.username !== user.username));
+      await handleUsersMakingFriends(
+        currentUser.username,
+        user.username,
+        token
+      );
     } catch (error) {
       console.log(error);
     }
@@ -61,8 +79,13 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
 
   const removeFriend = async (user) => {
     try {
-      await handleUsersRemovingFriends(currentUser.username, user, token);
-      fetchUsers();
+      setFriends(friends.filter((friend) => friend.username !== user.username));
+      setOthers([...others, user]);
+      await handleUsersRemovingFriends(
+        currentUser.username,
+        user.username,
+        token
+      );
     } catch (error) {
       console.log(error);
     }

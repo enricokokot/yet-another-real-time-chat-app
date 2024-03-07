@@ -1,6 +1,7 @@
 import React from "react";
 import { Button, SafeAreaView, StyleSheet, TextInput } from "react-native";
 import handleLogin from "../api/login";
+import handleUsersFetch from "../api/users";
 
 export default function LoginForm({ onLogin }) {
   const [username, setUsername] = React.useState("");
@@ -8,9 +9,17 @@ export default function LoginForm({ onLogin }) {
 
   const submit = async () => {
     try {
-      const response = await handleLogin(username, password);
-      const parsedResponse = JSON.parse(response);
-      onLogin(parsedResponse.user, parsedResponse.token.access_token);
+      const tokenResponse = await handleLogin(username, password);
+      const parsedTokenResponse = JSON.parse(tokenResponse);
+      const allUsersResponse = await handleUsersFetch(
+        "undefined",
+        parsedTokenResponse.token.access_token
+      );
+      const parsedAllUsersResponse = JSON.parse(allUsersResponse);
+      const theUser = parsedAllUsersResponse.filter(
+        (user) => user.username === username
+      )[0];
+      onLogin(theUser, parsedTokenResponse.token.access_token);
     } catch (error) {
       console.log(error);
     }
