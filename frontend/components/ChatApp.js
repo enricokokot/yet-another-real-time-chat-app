@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Pressable } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  useWindowDimensions,
+} from "react-native";
 import Circle from "./Circle";
 import handleUsersFetch from "../api/users";
 import UsersList from "./UsersList";
@@ -15,6 +21,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const [ws, setWs] = useState(null);
   const [inbox, setInbox] = useState([]);
   const [unknownInInbox, setUnknownInInbox] = useState(false);
+  const { height } = useWindowDimensions();
 
   const openWebSocket = () => {
     const ws = handleOpeningWebSocket(
@@ -106,23 +113,27 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
         <Pressable onPress={() => submit()}>
           <Circle style={styles.paddedElement} content={currentUser.username} />
         </Pressable>
-        <UsersList
-          users={others}
-          friendStuff={addFriend}
-          startChat={changeSubject}
-          inbox={inbox}
-          currentSubject={currentSubject}
-        />
-      </View>
-      <View style={styles.underBar}>
-        <View style={styles.verticalBar}>
+        <ScrollView horizontal>
           <UsersList
-            users={friends}
-            friendStuff={removeFriend}
+            users={others}
+            friendStuff={addFriend}
             startChat={changeSubject}
             inbox={inbox}
             currentSubject={currentSubject}
           />
+        </ScrollView>
+      </View>
+      <View style={styles.underBar}>
+        <View style={[styles.verticalBar, { height: height - 100 }]}>
+          <ScrollView>
+            <UsersList
+              users={friends}
+              friendStuff={removeFriend}
+              startChat={changeSubject}
+              inbox={inbox}
+              currentSubject={currentSubject}
+            />
+          </ScrollView>
         </View>
         <ChatScreen
           subject={currentSubject}
