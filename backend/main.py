@@ -126,14 +126,14 @@ async def read_messages(the_user: Annotated[schemas.User, Depends(get_current_us
 
 
 @app.get("/message/{fromId}/{toId}")
-async def read_messages_from_chat(the_user: Annotated[schemas.User, Depends(get_current_user)], fromId, toId, db: Session = Depends(get_db)):
+async def read_messages_from_chat(the_user: Annotated[schemas.User, Depends(get_current_user)], fromId, toId, db: Session = Depends(get_db), skip: int = 0, limit: int = 1000):
     from_user = crud.get_user_by_username(db, username=fromId)
     to_user = crud.get_user_by_username(db, username=toId)
     if from_user is None or to_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     if from_user == to_user:
         raise HTTPException(status_code=400, detail="Cannot send message to self")
-    return crud.get_messages_from_chat(db, from_user.id, to_user.id)
+    return crud.get_messages_from_chat(db, from_user.id, to_user.id, skip, limit)
 
 
 def verify_password(plain_password: str, hashed_password: str):

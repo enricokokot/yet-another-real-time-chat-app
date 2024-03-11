@@ -9,6 +9,7 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
   const inputRef = useRef();
+  const [pageNumber, setPageNumber] = useState(0);
 
   useEffect(() => {
     getChatHistory(currentUser.username, subject.username);
@@ -20,9 +21,14 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
       return;
     }
     try {
-      const data = await handleGettingChatHistory(user, subject, token);
+      const data = await handleGettingChatHistory(
+        user,
+        subject,
+        token,
+        pageNumber
+      );
       const parsedData = JSON.parse(data);
-      const chatHistory = parsedData.toReversed();
+      const chatHistory = parsedData;
       setCurrentChat(chatHistory.map((message) => message));
     } catch (error) {
       console.log(error);
@@ -49,10 +55,27 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
     getChatHistory(currentUser.username, subject.username);
   };
 
+  const loadMoreItems = async () => {
+    setPageNumber(pageNumber + 1);
+    const data = await handleGettingChatHistory(
+      currentUser.username,
+      subject.username,
+      token,
+      pageNumber
+    );
+    const parsedData = JSON.parse(data);
+    const chatHistory = parsedData;
+    setCurrentChat([...currentChat, ...chatHistory.map((message) => message)]);
+  };
+
   return (
     subject && (
       <View style={styles.container}>
-        <ChatHistory currentUser={currentUser.id} currentChat={currentChat} />
+        <ChatHistory
+          currentUser={currentUser.id}
+          currentChat={currentChat}
+          loadMoreItems={loadMoreItems}
+        />
         <View style={styles.sender}>
           <View style={styles.inputContainer}>
             <TextInput
