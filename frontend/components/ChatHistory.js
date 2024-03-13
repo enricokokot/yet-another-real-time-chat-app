@@ -1,7 +1,8 @@
 import { useRef, useEffect } from "react";
-import { View, StyleSheet, Text, ScrollView, FlatList } from "react-native";
+import { View, StyleSheet, Text, FlatList } from "react-native";
 
 const ChatHistory = ({ currentUser, currentChat, loadMoreItems }) => {
+  console.log(currentChat);
   const scrollViewRef = useRef();
 
   useEffect(() => {
@@ -30,16 +31,16 @@ const ChatHistory = ({ currentUser, currentChat, loadMoreItems }) => {
       data={currentChat}
       renderItem={({ item: message }) =>
         message.fromId == currentUser ? (
-          <View style={styles.userBubble} key={message.timestamp}>
+          <View style={styles.userBubble}>
             <Text style={styles.userText}>{message.content}</Text>
           </View>
         ) : (
-          <View style={styles.otherBubble} key={message.timestamp}>
+          <View style={styles.otherBubble}>
             <Text>{message.content}</Text>
           </View>
         )
       }
-      keyExtractor={(message) => message.timestamp.toString()}
+      keyExtractor={(message) => message.id.toString()}
       onEndReached={loadMoreItems}
       onEndReachedThreshold={0.1}
       inverted

@@ -5,11 +5,18 @@ import handleGettingChatHistory from "../api/getchat";
 import handleSendMessage from "../api/sendmessage";
 import Circle from "./Circle";
 
-const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
+const ChatScreen = ({
+  subject,
+  currentUser,
+  connection,
+  inbox,
+  token,
+  pageNumber,
+  setPageNumber,
+}) => {
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
   const inputRef = useRef();
-  const [pageNumber, setPageNumber] = useState(0);
 
   useEffect(() => {
     getChatHistory(currentUser.username, subject.username);
@@ -65,7 +72,13 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
     );
     const parsedData = JSON.parse(data);
     const chatHistory = parsedData;
-    setCurrentChat([...currentChat, ...chatHistory.map((message) => message)]);
+    setCurrentChat([
+      ...currentChat,
+      ...chatHistory.filter(
+        (message) =>
+          !currentChat.map((message) => message.id).includes(message.id)
+      ),
+    ]);
   };
 
   return (
