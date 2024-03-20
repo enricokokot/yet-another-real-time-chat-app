@@ -70,7 +70,7 @@ def get_messages_from_chat(db: Session, fromId: int, toId: int, skip: int, limit
             and_(models.Message.fromId == fromId, models.Message.toId == toId),
             and_(models.Message.fromId == toId, models.Message.toId == fromId)
         )
-    ).order_by(models.Message.timestamp.asc()).offset(skip).limit(limit).all()
+    ).order_by(models.Message.timestamp.desc()).offset(skip).limit(limit).all()
 
 
 def create_unread_message(db: Session, message_id: int):
