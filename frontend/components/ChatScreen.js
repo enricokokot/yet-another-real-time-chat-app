@@ -59,19 +59,28 @@ const ChatScreen = ({
     connection.send(JSON.stringify(wholeData));
 
     await handleSendMessage(currentUser.id, subject.id, text, token);
-    getChatHistory(currentUser.username, subject.username);
+    setCurrentChat([
+      {
+        id: currentChat.length + 1,
+        fromId: currentUser.id,
+        toId: subject.id,
+        content: text,
+        // createdAt: new Date().toISOString(),
+      },
+      ...currentChat,
+    ]);
   };
 
   const loadMoreItems = async () => {
-    setPageNumber(pageNumber + 1);
     const data = await handleGettingChatHistory(
       currentUser.username,
       subject.username,
       token,
-      pageNumber
+      pageNumber + 1
     );
     const parsedData = JSON.parse(data);
     const chatHistory = parsedData;
+    chatHistory.length > 14 && setPageNumber(pageNumber + 1);
     setCurrentChat([
       ...currentChat,
       ...chatHistory.filter(
