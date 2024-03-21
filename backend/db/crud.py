@@ -61,7 +61,7 @@ def create_message(db: Session, message: schemas.MessageCreate):
 
 
 def get_messages(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Message).offset(skip).limit(limit).all()
+    return db.query(models.Message).order_by(models.Message.id.desc()).offset(skip).limit(limit).all()
 
 
 def get_messages_from_chat(db: Session, fromId: int, toId: int, skip: int, limit: int):

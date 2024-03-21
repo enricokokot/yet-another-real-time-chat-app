@@ -238,9 +238,12 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                 if loaded_data["data"]["toId"] in active_connections.keys():
                     await active_connections[loaded_data["data"]["toId"]].send_text(json.dumps(loaded_data))
                 else:
-                    # TODO: fix problematic unread message storing
-                    all_messages = crud.get_messages(db, 0, 1000)
-                    crud.create_unread_message(db, len(all_messages) + 1)
+                    try:
+                        last_message = crud.get_messages(db, 0, 1)
+                        actual_last_message = last_message[0]
+                        crud.create_unread_message(db, actual_last_message.id + 1)
+                    except:
+                        crud.create_unread_message(db, 1)
     except:
         for key, value in dict(active_connections).items():
             if value == websocket:
