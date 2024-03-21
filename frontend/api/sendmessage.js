@@ -6,7 +6,7 @@ const handleSendMessage = async (requestId, responseId, text, token) => {
   };
 
   try {
-    const response = await fetch(`http://127.0.0.1:8010/message`, {
+    const response = await fetch(`http://127.0.0.1:80/message`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

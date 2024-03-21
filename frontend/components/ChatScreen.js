@@ -5,14 +5,37 @@ import handleGettingChatHistory from "../api/getchat";
 import handleSendMessage from "../api/sendmessage";
 import Circle from "./Circle";
 
-const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
+const ChatScreen = ({
+  subject,
+  currentUser,
+  connection,
+  inbox,
+  token,
+  pageNumber,
+  setPageNumber,
+}) => {
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
   const inputRef = useRef();
+  const [newMessageReceived, setNewMessageReceived] = useState(false);
 
   useEffect(() => {
     getChatHistory(currentUser.username, subject.username);
-  }, [subject, inbox]);
+  }, [subject]);
+
+  useEffect(() => {
+    if (
+      inbox.length !== 0 &&
+      inbox.map((message) => message.data.fromId).includes(subject.id)
+    ) {
+      const newMessage = {
+        ...inbox[inbox.length - 1].data,
+        id: currentChat.length ? currentChat[0].id + 1 : 1,
+      };
+      setCurrentChat([newMessage, ...currentChat]);
+      setNewMessageReceived((prev) => !prev);
+    }
+  }, [inbox]);
 
   const getChatHistory = async (user, subject) => {
     if (!user || !subject) {
@@ -20,9 +43,14 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
       return;
     }
     try {
-      const data = await handleGettingChatHistory(user, subject, token);
+      const data = await handleGettingChatHistory(
+        user,
+        subject,
+        token,
+        pageNumber
+      );
       const parsedData = JSON.parse(data);
-      const chatHistory = parsedData.toReversed();
+      const chatHistory = parsedData;
       setCurrentChat(chatHistory.map((message) => message));
     } catch (error) {
       console.log(error);
@@ -46,13 +74,46 @@ const ChatScreen = ({ subject, currentUser, connection, inbox, token }) => {
     connection.send(JSON.stringify(wholeData));
 
     await handleSendMessage(currentUser.id, subject.id, text, token);
-    getChatHistory(currentUser.username, subject.username);
+    setCurrentChat((previousChat) => [
+      {
+        id: currentChat.length ? currentChat[0].id + 1 : 1,
+        fromId: currentUser.id,
+        toId: subject.id,
+        content: text,
+        // createdAt: new Date().toISOString(),
+      },
+      ...previousChat,
+    ]);
+  };
+
+  const loadMoreItems = async () => {
+    const data = await handleGettingChatHistory(
+      currentUser.username,
+      subject.username,
+      token,
+      pageNumber + 1
+    );
+    const parsedData = JSON.parse(data);
+    const chatHistory = parsedData;
+    chatHistory.length > 14 && setPageNumber(pageNumber + 1);
+    setCurrentChat((previousChat) => [
+      ...previousChat,
+      ...chatHistory.filter(
+        (message) =>
+          !currentChat.map((message) => message.id).includes(message.id)
+      ),
+    ]);
   };
 
   return (
     subject && (
       <View style={styles.container}>
-        <ChatHistory currentUser={currentUser.id} currentChat={currentChat} />
+        <ChatHistory
+          currentUser={currentUser.id}
+          currentChat={currentChat}
+          loadMoreItems={loadMoreItems}
+          newMessageReceived={newMessageReceived}
+        />
         <View style={styles.sender}>
           <View style={styles.inputContainer}>
             <TextInput

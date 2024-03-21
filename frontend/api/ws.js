@@ -4,7 +4,7 @@ const handleOpeningWebSocket = (
   users,
   setUnknownInInbox
 ) => {
-  const ws = new WebSocket("ws://localhost:8010/ws");
+  const ws = new WebSocket("ws://localhost:80/ws");
 
   ws.onopen = () => {
     console.log("connection opened");

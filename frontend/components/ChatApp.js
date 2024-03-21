@@ -22,6 +22,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const [inbox, setInbox] = useState([]);
   const [unknownInInbox, setUnknownInInbox] = useState(false);
   const { height } = useWindowDimensions();
+  const [pageNumber, setPageNumber] = useState(0);
 
   const openWebSocket = () => {
     const ws = handleOpeningWebSocket(
@@ -100,6 +101,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
 
   const changeSubject = (user) => {
     setCurrentSubject(user);
+    setPageNumber(0);
   };
 
   const submit = () => {
@@ -141,6 +143,8 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
           connection={ws}
           inbox={inbox}
           token={token}
+          pageNumber={pageNumber}
+          setPageNumber={setPageNumber}
         />
       </View>
     </View>

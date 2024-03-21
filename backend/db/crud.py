@@ -61,16 +61,16 @@ def create_message(db: Session, message: schemas.MessageCreate):
 
 
 def get_messages(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Message).offset(skip).limit(limit).all()
+    return db.query(models.Message).order_by(models.Message.id.desc()).offset(skip).limit(limit).all()
 
 
-def get_messages_from_chat(db: Session, fromId: int, toId: int):
+def get_messages_from_chat(db: Session, fromId: int, toId: int, skip: int, limit: int):
     return db.query(models.Message).filter(
         or_(
             and_(models.Message.fromId == fromId, models.Message.toId == toId),
             and_(models.Message.fromId == toId, models.Message.toId == fromId)
         )
-    ).order_by(models.Message.timestamp.desc()).all()
+    ).order_by(models.Message.timestamp.desc()).offset(skip).limit(limit).all()
 
 
 def create_unread_message(db: Session, message_id: int):

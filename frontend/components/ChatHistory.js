@@ -1,27 +1,41 @@
 import { useRef, useEffect } from "react";
-import { View, StyleSheet, Text, ScrollView } from "react-native";
+import { View, StyleSheet, Text, FlatList } from "react-native";
 
-const ChatHistory = ({ currentUser, currentChat }) => {
+const ChatHistory = ({
+  currentUser,
+  currentChat,
+  loadMoreItems,
+  newMessageReceived,
+}) => {
   const scrollViewRef = useRef();
 
   useEffect(() => {
-    scrollViewRef.current.scrollToEnd({ animated: true });
-  }, [currentChat]);
+    if (currentChat && currentChat.length > 0) {
+      scrollViewRef.current.scrollToIndex({ index: 0, animated: true });
+    }
+  }, [newMessageReceived]);
 
   return currentChat ? (
-    <ScrollView ref={scrollViewRef} style={styles.container}>
-      {currentChat.map((message) =>
+    <FlatList
+      ref={scrollViewRef}
+      style={styles.container}
+      data={currentChat}
+      renderItem={({ item: message }) =>
         message.fromId == currentUser ? (
-          <View style={styles.userBubble} key={message.timestamp}>
+          <View style={styles.userBubble}>
             <Text style={styles.userText}>{message.content}</Text>
           </View>
         ) : (
-          <View style={styles.otherBubble} key={message.timestamp}>
+          <View style={styles.otherBubble}>
             <Text>{message.content}</Text>
           </View>
         )
-      )}
-    </ScrollView>
+      }
+      keyExtractor={(message) => message.id.toString()}
+      onEndReached={loadMoreItems}
+      onEndReachedThreshold={0.1}
+      inverted
+    />
   ) : (
     <View style={styles.container}>
       <Text>x</Text>

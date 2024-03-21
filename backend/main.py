@@ -27,7 +27,7 @@ app = FastAPI()
 
 origins = [
     "http://localhost",
-    "http://localhost:8081",
+    "http://localhost:8173",
 ]
 
 app.add_middleware(
@@ -126,14 +126,14 @@ async def read_messages(the_user: Annotated[schemas.User, Depends(get_current_us
 
 
 @app.get("/message/{fromId}/{toId}")
-async def read_messages_from_chat(the_user: Annotated[schemas.User, Depends(get_current_user)], fromId, toId, db: Session = Depends(get_db)):
+async def read_messages_from_chat(the_user: Annotated[schemas.User, Depends(get_current_user)], fromId, toId, db: Session = Depends(get_db), skip: int = 0, limit: int = 1000):
     from_user = crud.get_user_by_username(db, username=fromId)
     to_user = crud.get_user_by_username(db, username=toId)
     if from_user is None or to_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     if from_user == to_user:
         raise HTTPException(status_code=400, detail="Cannot send message to self")
-    return crud.get_messages_from_chat(db, from_user.id, to_user.id)
+    return crud.get_messages_from_chat(db, from_user.id, to_user.id, skip, limit)
 
 
 def verify_password(plain_password: str, hashed_password: str):
@@ -186,7 +186,7 @@ async def signin(userInfo: schemas.NewUserInfo):
     payload = {"username": userInfo.username, "password": userInfo.password}
 
     async with aiohttp.ClientSession() as session:
-        async with session.post('http://127.0.0.1:8010/user/', json=payload) as response:
+        async with session.post('http://127.0.0.1:80/user/', json=payload) as response:
             new_user = await response.json()
 
     return {"message": "User successfully created.", "user": new_user}
@@ -197,7 +197,7 @@ async def signin(userInfo: schemas.NewUserInfo):
 async def login(userInfo: schemas.UserInfo):
     payload = {"username": userInfo.username, "password": userInfo.password}
     async with aiohttp.ClientSession() as session:
-        async with session.post('http://127.0.0.1:8010/token', data=payload) as response:
+        async with session.post('http://127.0.0.1:80/token', data=payload) as response:
             token = await response.json()
             return {
                 "message": "Login successful.",
@@ -238,8 +238,12 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                 if loaded_data["data"]["toId"] in active_connections.keys():
                     await active_connections[loaded_data["data"]["toId"]].send_text(json.dumps(loaded_data))
                 else:
-                    all_messages = crud.get_messages(db, 0, 1000)
-                    crud.create_unread_message(db, len(all_messages) + 1)
+                    try:
+                        last_message = crud.get_messages(db, 0, 1)
+                        actual_last_message = last_message[0]
+                        crud.create_unread_message(db, actual_last_message.id + 1)
+                    except:
+                        crud.create_unread_message(db, 1)
     except:
         for key, value in dict(active_connections).items():
             if value == websocket:
@@ -249,4 +253,4 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
 import uvicorn
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8010)
+    uvicorn.run(app, host="0.0.0.0", port=80)
