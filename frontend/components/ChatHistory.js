@@ -1,15 +1,15 @@
-import { useRef, useEffect } from "react";
+// import { useRef, useEffect } from "react";
 import { View, StyleSheet, Text, FlatList } from "react-native";
 
 const ChatHistory = ({ currentUser, currentChat, loadMoreItems }) => {
   console.log(currentChat);
-  const scrollViewRef = useRef();
+  // const scrollViewRef = useRef();
 
-  useEffect(() => {
-    if (currentChat && currentChat.length > 0) {
-      scrollViewRef.current.scrollToIndex({ index: 0, animated: true });
-    }
-  }, [currentChat]);
+  // useEffect(() => {
+  //   if (currentChat && currentChat.length > 0) {
+  //     scrollViewRef.current.scrollToIndex({ index: 0, animated: true });
+  //   }
+  // }, [currentChat]);
 
   return currentChat ? (
     // <ScrollView ref={scrollViewRef} style={styles.container}>
@@ -26,7 +26,7 @@ const ChatHistory = ({ currentUser, currentChat, loadMoreItems }) => {
     //   )}
     // </ScrollView>
     <FlatList
-      ref={scrollViewRef}
+      // ref={scrollViewRef}
       style={styles.container}
       data={currentChat}
       renderItem={({ item: message }) =>
