@@ -17,6 +17,7 @@ const ChatScreen = ({
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
   const inputRef = useRef();
+  const [newMessageReceived, setNewMessageReceived] = useState(false);
 
   useEffect(() => {
     getChatHistory(currentUser.username, subject.username);
@@ -32,6 +33,7 @@ const ChatScreen = ({
         id: currentChat.length ? currentChat[0].id + 1 : 1,
       };
       setCurrentChat([newMessage, ...currentChat]);
+      setNewMessageReceived((prev) => !prev);
     }
   }, [inbox]);
 
@@ -110,6 +112,7 @@ const ChatScreen = ({
           currentUser={currentUser.id}
           currentChat={currentChat}
           loadMoreItems={loadMoreItems}
+          newMessageReceived={newMessageReceived}
         />
         <View style={styles.sender}>
           <View style={styles.inputContainer}>
