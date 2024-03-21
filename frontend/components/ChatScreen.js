@@ -20,7 +20,20 @@ const ChatScreen = ({
 
   useEffect(() => {
     getChatHistory(currentUser.username, subject.username);
-  }, [subject, inbox]);
+  }, [subject]);
+
+  useEffect(() => {
+    if (
+      inbox.length !== 0 &&
+      inbox.map((message) => message.data.fromId).includes(subject.id)
+    ) {
+      const newMessage = {
+        ...inbox[inbox.length - 1].data,
+        id: currentChat[0].id + 1,
+      };
+      setCurrentChat([newMessage, ...currentChat]);
+    }
+  }, [inbox]);
 
   const getChatHistory = async (user, subject) => {
     if (!user || !subject) {
@@ -59,15 +72,15 @@ const ChatScreen = ({
     connection.send(JSON.stringify(wholeData));
 
     await handleSendMessage(currentUser.id, subject.id, text, token);
-    setCurrentChat([
+    setCurrentChat((previousChat) => [
       {
-        id: currentChat.length + 1,
+        id: currentChat[0].id + 1,
         fromId: currentUser.id,
         toId: subject.id,
         content: text,
         // createdAt: new Date().toISOString(),
       },
-      ...currentChat,
+      ...previousChat,
     ]);
   };
 
@@ -81,8 +94,8 @@ const ChatScreen = ({
     const parsedData = JSON.parse(data);
     const chatHistory = parsedData;
     chatHistory.length > 14 && setPageNumber(pageNumber + 1);
-    setCurrentChat([
-      ...currentChat,
+    setCurrentChat((previousChat) => [
+      ...previousChat,
       ...chatHistory.filter(
         (message) =>
           !currentChat.map((message) => message.id).includes(message.id)

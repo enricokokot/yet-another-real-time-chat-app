@@ -2,7 +2,6 @@
 import { View, StyleSheet, Text, FlatList } from "react-native";
 
 const ChatHistory = ({ currentUser, currentChat, loadMoreItems }) => {
-  console.log(currentChat);
   // const scrollViewRef = useRef();
 
   // useEffect(() => {
@@ -12,19 +11,6 @@ const ChatHistory = ({ currentUser, currentChat, loadMoreItems }) => {
   // }, [currentChat]);
 
   return currentChat ? (
-    // <ScrollView ref={scrollViewRef} style={styles.container}>
-    //   {currentChat.map((message) =>
-    //     message.fromId == currentUser ? (
-    //       <View style={styles.userBubble} key={message.timestamp}>
-    //         <Text style={styles.userText}>{message.content}</Text>
-    //       </View>
-    //     ) : (
-    //       <View style={styles.otherBubble} key={message.timestamp}>
-    //         <Text>{message.content}</Text>
-    //       </View>
-    //     )
-    //   )}
-    // </ScrollView>
     <FlatList
       // ref={scrollViewRef}
       style={styles.container}
