@@ -6,7 +6,7 @@ const handleGettingChatHistory = async (
 ) => {
   try {
     const response = await fetch(
-      `http://127.0.0.1:8010/message/${requestId}/${responseId}/?skip=${
+      `http://127.0.0.1:80/message/${requestId}/${responseId}/?skip=${
         pageNumber * 15
       }&limit=15`,
       {

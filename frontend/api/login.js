@@ -9,7 +9,7 @@ const handleLogin = async (username, password) => {
   };
 
   try {
-    const response = await fetch("http://127.0.0.1:8010/login", {
+    const response = await fetch("http://127.0.0.1:80/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
