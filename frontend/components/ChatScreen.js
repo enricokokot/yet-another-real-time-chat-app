@@ -13,6 +13,7 @@ const ChatScreen = ({
   token,
   pageNumber,
   setPageNumber,
+  setInbox,
 }) => {
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
@@ -36,6 +37,12 @@ const ChatScreen = ({
       setNewMessageReceived((prev) => !prev);
     }
   }, [inbox]);
+
+  useEffect(() => {
+    setInbox((previousInbox) =>
+      previousInbox.filter((message) => message.data.fromId !== subject.id)
+    );
+  }, [newMessageReceived]);
 
   const getChatHistory = async (user, subject) => {
     if (!user || !subject) {

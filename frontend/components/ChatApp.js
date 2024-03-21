@@ -145,6 +145,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
           token={token}
           pageNumber={pageNumber}
           setPageNumber={setPageNumber}
+          setInbox={setInbox}
         />
       </View>
     </View>
