@@ -29,7 +29,7 @@ const ChatScreen = ({
     ) {
       const newMessage = {
         ...inbox[inbox.length - 1].data,
-        id: currentChat[0].id + 1,
+        id: currentChat.length ? currentChat[0].id + 1 : 1,
       };
       setCurrentChat([newMessage, ...currentChat]);
     }
@@ -74,7 +74,7 @@ const ChatScreen = ({
     await handleSendMessage(currentUser.id, subject.id, text, token);
     setCurrentChat((previousChat) => [
       {
-        id: currentChat[0].id + 1,
+        id: currentChat.length ? currentChat[0].id + 1 : 1,
         fromId: currentUser.id,
         toId: subject.id,
         content: text,
