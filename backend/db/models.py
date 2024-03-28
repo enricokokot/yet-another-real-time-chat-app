@@ -10,6 +10,12 @@ friendship_association = Table('friendship', Base.metadata,
 )
 
 
+chats_users = Table('chats_users', Base.metadata,
+    Column('chat_id', Integer, ForeignKey('chats.id')),
+    Column('user_id', Integer, ForeignKey('users.id'))
+)
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -25,20 +31,30 @@ class User(Base):
         backref="users"
     )
 
+    chats = relationship("Chat", secondary=chats_users, back_populates="users")
+
 
 class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True)
     fromId = Column(Integer, ForeignKey('users.id'))
-    toId = Column(Integer, ForeignKey('users.id'))
+    toId = Column(Integer, ForeignKey('chats.id'))
     content = Column(String)
     timestamp = Column(String)
 
     from_user = relationship("User", foreign_keys=[fromId])
-    to_user = relationship("User", foreign_keys=[toId])
+    chat = relationship("Chat", foreign_keys=[toId], back_populates="messages")
 
 class UnreadMessage(Base):
     __tablename__ = "unread"
 
     message_id = Column(Integer, ForeignKey('messages.id'), primary_key=True)
+
+
+class Chat(Base):
+    __tablename__ = "chats"
+
+    id = Column(Integer, primary_key=True)
+    users = relationship("User", secondary=chats_users, back_populates="chats")
+    messages = relationship("Message", back_populates="chat")

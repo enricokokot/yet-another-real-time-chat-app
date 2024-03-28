@@ -53,24 +53,19 @@ def delete_friendship(db: Session, requestUser: models.User, responseUser: model
 
 
 def create_message(db: Session, message: schemas.MessageCreate):
-    db_message = models.Message(**message.dict(), timestamp=str(datetime.now()))
-    db.add(db_message)
+    chat = db.query(models.Chat).filter(models.Chat.id == message["toId"]).first()
+    chat.messages.append(models.Message(**message, timestamp=str(datetime.now())))
     db.commit()
-    db.refresh(db_message)
-    return db_message
+    db.refresh(chat)
+    return chat.messages[-1]
 
 
 def get_messages(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Message).order_by(models.Message.id.desc()).offset(skip).limit(limit).all()
 
 
-def get_messages_from_chat(db: Session, fromId: int, toId: int, skip: int, limit: int):
-    return db.query(models.Message).filter(
-        or_(
-            and_(models.Message.fromId == fromId, models.Message.toId == toId),
-            and_(models.Message.fromId == toId, models.Message.toId == fromId)
-        )
-    ).order_by(models.Message.timestamp.desc()).offset(skip).limit(limit).all()
+def get_messages_from_chat(db: Session, to_chat: int, skip: int, limit: int):
+    return db.query(models.Message).filter(models.Message.toId == to_chat.id).order_by(models.Message.timestamp.desc()).offset(skip).limit(limit).all()
 
 
 def create_unread_message(db: Session, message_id: int):
@@ -89,6 +84,35 @@ def delete_unread_message(db: Session, message_id: int):
     db.query(models.UnreadMessage).filter(models.UnreadMessage.message_id == message_id).delete()
     db.commit()
     return message_id
+
+
+def create_chat(db: Session, participants: list[int]):
+    db_chat = models.Chat()
+    db.add(db_chat)
+    db.commit()
+    db.refresh(db_chat)
+
+    for participant_id in participants:
+        participant = db.query(models.User).get(participant_id)
+        if participant:
+            participant.chats.append(db_chat)
+            db.commit()
+
+    return db_chat
+
+
+def get_chats(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Chat).offset(skip).limit(limit).all()
+
+
+def get_chat(db: Session, chat_id: int):
+    return db.query(models.Chat).filter(models.Chat.id == chat_id).first()
+
+
+def delete_chat(db: Session, chat_id: int):
+    db.query(models.Chat).filter(models.Chat.id == chat_id).delete()
+    db.commit()
+    return chat_id
 
 
 def hash_password(password: str):

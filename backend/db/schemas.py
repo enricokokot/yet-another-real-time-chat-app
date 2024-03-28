@@ -27,11 +27,13 @@ class User(UserBase):
 
 class MessageBase(BaseModel):
     fromId: int
-    toId: int
+    toId: int | List[int]
     content: str
+
 
 class MessageCreate(MessageBase):
     pass
+
 
 class Message(MessageBase):
     id: int
@@ -40,22 +42,31 @@ class Message(MessageBase):
     class Config:
         orm_mode = True
 
+
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
     username: str | None = None
+
 
 class UserInfo(BaseModel):
     username: str
     password: str
 
+
 class NewUserInfo(UserInfo):
     passwordAgain: str
+
 
 class UnreadMessage(BaseModel):
     message_id: int
 
     class Config:
         orm_mode = True
+
+
+class ChatCreate(BaseModel):
+    id: int | List[int]
