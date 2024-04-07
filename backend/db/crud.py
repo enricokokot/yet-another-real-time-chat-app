@@ -87,7 +87,8 @@ def delete_unread_message(db: Session, message_id: int):
 
 
 def create_chat(db: Session, participants: list[int]):
-    db_chat = models.Chat()
+    db_participants = db.query(models.User).filter(models.User.id.in_(participants)).all()
+    db_chat = models.Chat(users=db_participants)
     db.add(db_chat)
     db.commit()
     db.refresh(db_chat)

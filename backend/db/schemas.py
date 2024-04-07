@@ -17,9 +17,20 @@ class UserFriend(UserBase):
         orm_mode = True
 
 
+class ChatCreate(BaseModel):
+    id: int | List[int]
+
+class Chat(ChatCreate):
+    users: List[UserFriend] = Field(default_factory=list)
+
+    class Config:
+        orm_mode = True
+
+
 class User(UserBase):
     id: int
     friends: List[UserFriend] = Field(default_factory=list)
+    chats: List[Chat] = Field(default_factory=list)
 
     class Config:
         orm_mode = True
@@ -66,7 +77,3 @@ class UnreadMessage(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-class ChatCreate(BaseModel):
-    id: int | List[int]
