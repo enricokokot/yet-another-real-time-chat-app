@@ -21,7 +21,26 @@ const ChatScreen = ({
   const [newMessageReceived, setNewMessageReceived] = useState(false);
 
   useEffect(() => {
-    getChatHistory(currentUser.username, subject.username);
+    const theChat =
+      subject.id < currentUser.id
+        ? [subject.id, currentUser.id]
+        : [currentUser.id, subject.id];
+    const theChatStringified = theChat.join("");
+    const theChats = currentUser.chats.map((chat) =>
+      chat.users.map((user) => user.id)
+    );
+    const theChatsStringified = theChats.map((chat) => chat.join(""));
+    if (theChatsStringified.includes(theChatStringified)) {
+      const indexOfGivenChat = theChatsStringified.findIndex(
+        (chat) => chat === theChatStringified
+      );
+      const idOfChat = currentUser.chats.map((chat) => chat.id)[
+        indexOfGivenChat
+      ];
+      getChatHistory(currentUser.username, idOfChat);
+    } else {
+      setCurrentChat([]);
+    }
   }, [subject]);
 
   useEffect(() => {
@@ -50,12 +69,7 @@ const ChatScreen = ({
       return;
     }
     try {
-      const data = await handleGettingChatHistory(
-        user,
-        subject,
-        token,
-        pageNumber
-      );
+      const data = await handleGettingChatHistory(subject, token, pageNumber);
       const parsedData = JSON.parse(data);
       const chatHistory = parsedData;
       setCurrentChat(chatHistory.map((message) => message));
@@ -67,7 +81,7 @@ const ChatScreen = ({
   const handleSend = async () => {
     const data = {
       fromId: currentUser.id,
-      toId: subject.id,
+      toId: [subject.id],
       content: text,
     };
 
@@ -80,7 +94,7 @@ const ChatScreen = ({
 
     connection.send(JSON.stringify(wholeData));
 
-    await handleSendMessage(currentUser.id, subject.id, text, token);
+    await handleSendMessage(data.fromId, data.toId, data.content, token);
     setCurrentChat((previousChat) => [
       {
         id: currentChat.length ? currentChat[0].id + 1 : 1,
@@ -95,8 +109,7 @@ const ChatScreen = ({
 
   const loadMoreItems = async () => {
     const data = await handleGettingChatHistory(
-      currentUser.username,
-      subject.username,
+      subject.id,
       token,
       pageNumber + 1
     );

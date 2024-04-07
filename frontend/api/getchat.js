@@ -1,14 +1,7 @@
-const handleGettingChatHistory = async (
-  requestId,
-  responseId,
-  token,
-  pageNumber
-) => {
+const handleGettingChatHistory = async (chatId, token, pageNumber) => {
   try {
     const response = await fetch(
-      `http://127.0.0.1:80/message/${requestId}/${responseId}/?skip=${
-        pageNumber * 15
-      }&limit=15`,
+      `http://127.0.0.1:80/message/${chatId}/?skip=${pageNumber * 15}&limit=15`,
       {
         method: "GET",
         headers: {
