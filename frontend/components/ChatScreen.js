@@ -21,23 +21,8 @@ const ChatScreen = ({
   const [newMessageReceived, setNewMessageReceived] = useState(false);
 
   useEffect(() => {
-    const theChat =
-      subject.id < currentUser.id
-        ? [subject.id, currentUser.id]
-        : [currentUser.id, subject.id];
-    const theChatStringified = theChat.join("");
-    const theChats = currentUser.chats.map((chat) =>
-      chat.users.map((user) => user.id)
-    );
-    const theChatsStringified = theChats.map((chat) => chat.join(""));
-    if (theChatsStringified.includes(theChatStringified)) {
-      const indexOfGivenChat = theChatsStringified.findIndex(
-        (chat) => chat === theChatStringified
-      );
-      const idOfChat = currentUser.chats.map((chat) => chat.id)[
-        indexOfGivenChat
-      ];
-      getChatHistory(currentUser.username, idOfChat);
+    if (currentUser.chats.map((chat) => chat.id).includes(subject)) {
+      getChatHistory(currentUser.username, subject);
     } else {
       setCurrentChat([]);
     }
