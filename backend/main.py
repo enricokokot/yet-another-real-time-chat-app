@@ -121,6 +121,31 @@ async def create_message(the_user: Annotated[schemas.User, Depends(get_current_u
     return crud.create_message(db=db, message=message)
 
 
+@app.get("/chat/{chat_id}", response_model=schemas.Chat)
+async def read_chat(the_user: Annotated[schemas.User, Depends(get_current_user)], chat_id: int, db: Session = Depends(get_db)):
+    chat = crud.get_chat(db, chat_id=chat_id)
+    if chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    return chat
+
+
+@app.post("/chat/", response_model=schemas.Chat)
+async def create_chat(the_user: Annotated[schemas.User, Depends(get_current_user)], chat: schemas.ChatCreate, db: Session = Depends(get_db)):
+    if len(chat.users) < 2:
+        raise HTTPException(status_code=400, detail="Chat must have at least 2 users")
+    if the_user.id not in chat.users:
+        raise HTTPException(status_code=400, detail="User creating chat not in chat")
+    chats_restrutured = {chat.id: [user.id for user in chat.users] for chat in the_user.chats}
+    for local_id, local_chat in chats_restrutured.items():
+        if local_chat == sorted(chat.users):
+            # raise HTTPException(status_code=400, detail="Chat already exists", chat_id=local_id)
+            return crud.get_chat(db, chat_id=local_id)
+    for user_id in chat.users:
+        if crud.get_user(db, user_id=user_id) is None:
+            raise HTTPException(status_code=404, detail="User not found")
+    return crud.create_chat(db=db, participants=chat.users)
+
+
 @app.get("/message/")
 async def read_messages(the_user: Annotated[schemas.User, Depends(get_current_user)], db: Session = Depends(get_db)):
     return crud.get_messages(db)

@@ -18,9 +18,11 @@ class UserFriend(UserBase):
 
 
 class ChatCreate(BaseModel):
-    id: int | List[int]
+    users: List[int] = Field(default_factory=list)
 
-class Chat(ChatCreate):
+
+class Chat(BaseModel):
+    id: int
     users: List[UserFriend] = Field(default_factory=list)
 
     class Config:
@@ -38,7 +40,7 @@ class User(UserBase):
 
 class MessageBase(BaseModel):
     fromId: int
-    toId: int | List[int]
+    toId: int
     content: str
 
 
