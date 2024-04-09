@@ -69,7 +69,12 @@ const ChatScreen = ({
       return;
     }
     try {
-      const data = await handleGettingChatHistory(subject, token, pageNumber);
+      const data = await handleGettingChatHistory(
+        currentUser.id,
+        subject,
+        token,
+        pageNumber
+      );
       const parsedData = JSON.parse(data);
       const chatHistory = parsedData;
       setCurrentChat(chatHistory.map((message) => message));
@@ -109,7 +114,8 @@ const ChatScreen = ({
 
   const loadMoreItems = async () => {
     const data = await handleGettingChatHistory(
-      subject.id,
+      currentUser.id,
+      [subject.id],
       token,
       pageNumber + 1
     );

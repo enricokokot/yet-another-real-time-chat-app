@@ -276,6 +276,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                     active_connections[loaded_data["data"]["user"]] = websocket
                     all_unreads = crud.get_unread_messages(db)
                     for unread_message in all_unreads:
+                        print(unread_message)
                         if unread_message.toId == loaded_data["data"]["user"]:
                             sent_message = {
                                 "type": "message",

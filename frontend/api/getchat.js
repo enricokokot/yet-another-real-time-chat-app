@@ -1,7 +1,19 @@
-const handleGettingChatHistory = async (chatId, token, pageNumber) => {
+import handleCreateChat from "./createchat";
+
+const handleGettingChatHistory = async (
+  currentUserId,
+  chatId,
+  token,
+  pageNumber
+) => {
   try {
+    const realChatId = Array.isArray(chatId)
+      ? await handleCreateChat(currentUserId, chatId, token)
+      : chatId;
     const response = await fetch(
-      `http://127.0.0.1:80/message/${chatId}/?skip=${pageNumber * 15}&limit=15`,
+      `http://127.0.0.1:80/message/${realChatId}/?skip=${
+        pageNumber * 15
+      }&limit=15`,
       {
         method: "GET",
         headers: {
