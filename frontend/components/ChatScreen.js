@@ -31,7 +31,7 @@ const ChatScreen = ({
   useEffect(() => {
     if (
       inbox.length !== 0 &&
-      inbox.map((message) => message.data.fromId).includes(subject.id)
+      inbox.map((message) => message.data.toId).includes(subject)
     ) {
       const newMessage = {
         ...inbox[inbox.length - 1].data,
@@ -44,7 +44,7 @@ const ChatScreen = ({
 
   useEffect(() => {
     setInbox((previousInbox) =>
-      previousInbox.filter((message) => message.data.fromId !== subject.id)
+      previousInbox.filter((message) => message.data.toId !== subject)
     );
   }, [newMessageReceived]);
 
@@ -89,7 +89,7 @@ const ChatScreen = ({
       {
         id: currentChat.length ? currentChat[0].id + 1 : 1,
         fromId: currentUser.id,
-        toId: subject.id,
+        toId: subject,
         content: text,
         // createdAt: new Date().toISOString(),
       },
