@@ -9,14 +9,16 @@ import {
 import Circle from "./Circle";
 import handleUsersFetch from "../api/users";
 import UsersList from "./UsersList";
-import handleUsersMakingFriends from "../api/addfriend";
-import handleUsersRemovingFriends from "../api/removefriend";
+// import handleUsersMakingFriends from "../api/addfriend";
+// import handleUsersRemovingFriends from "../api/removefriend";
 import ChatScreen from "./ChatScreen";
 import handleOpeningWebSocket from "../api/ws";
+import ChatsList from "./ChatsList";
 
 const ChatApp = ({ onLogout, currentUser, token }) => {
-  const [friends, setFriends] = useState([]);
-  const [others, setOthers] = useState([]);
+  // const [friends, setFriends] = useState([]);
+  // const [others, setOthers] = useState([]);
+  const [usersExceptUser, setUsersExceptUser] = useState([]);
   // const [currentSubject, setCurrentSubject] = useState("");
   const [activeChat, setActiveChat] = useState(0);
   const [ws, setWs] = useState(null);
@@ -29,13 +31,14 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
     const ws = handleOpeningWebSocket(
       currentUser.id,
       setInbox,
-      [...friends, ...others],
+      usersExceptUser,
       setUnknownInInbox
     );
     setWs(ws);
   };
 
   useEffect(() => {
+    console.log("oye");
     openWebSocket();
     fetchUsers();
   }, []);
@@ -52,51 +55,57 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
     try {
       const allUsers = await handleUsersFetch("undefined", token);
       const actualUsers = Array.from(JSON.parse(allUsers));
-      const actualFriends = currentUser.friends;
+      console.log("ChatApp.js: actualUsers: ", actualUsers);
+      // const actualFriends = currentUser.friends;
       const usersBesideCurrentUser = actualUsers.filter(
         (user) => user.username !== currentUser.username
       );
-      const userOthers = usersBesideCurrentUser.filter(
-        (user) =>
-          !actualFriends
-            .map((friend) => friend.username)
-            .includes(user.username)
-      );
+      // const userOthers = usersBesideCurrentUser.filter(
+      //   (user) =>
+      //     !actualFriends
+      //       .map((friend) => friend.username)
+      //       .includes(user.username)
+      // );
 
-      setFriends(actualFriends);
-      setOthers(userOthers);
+      // setFriends(actualFriends);
+      // setOthers(userOthers);
+      console.log(
+        "ChatApp.js: usersBesideCurrentUser: ",
+        usersBesideCurrentUser
+      );
+      setUsersExceptUser(usersBesideCurrentUser);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const addFriend = async (user) => {
-    try {
-      setFriends([...friends, user]);
-      setOthers(others.filter((other) => other.username !== user.username));
-      await handleUsersMakingFriends(
-        currentUser.username,
-        user.username,
-        token
-      );
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // const addFriend = async (user) => {
+  //   try {
+  //     setFriends([...friends, user]);
+  //     setOthers(others.filter((other) => other.username !== user.username));
+  //     await handleUsersMakingFriends(
+  //       currentUser.username,
+  //       user.username,
+  //       token
+  //     );
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
-  const removeFriend = async (user) => {
-    try {
-      setFriends(friends.filter((friend) => friend.username !== user.username));
-      setOthers([...others, user]);
-      await handleUsersRemovingFriends(
-        currentUser.username,
-        user.username,
-        token
-      );
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // const removeFriend = async (user) => {
+  //   try {
+  //     setFriends(friends.filter((friend) => friend.username !== user.username));
+  //     setOthers([...others, user]);
+  //     await handleUsersRemovingFriends(
+  //       currentUser.username,
+  //       user.username,
+  //       token
+  //     );
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
   const changeSubject = (chatId) => {
     setActiveChat(chatId);
@@ -115,22 +124,23 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
           <Circle style={styles.paddedElement} content={currentUser.username} />
         </Pressable>
         <ScrollView horizontal>
-          {/* <UsersList
-            users={others}
-            friendStuff={addFriend}
+          <UsersList
+            currentUser={currentUser}
+            users={usersExceptUser}
+            // friendStuff={addFriend}
             startChat={changeSubject}
             inbox={inbox}
             activeChat={activeChat}
-          /> */}
+          />
         </ScrollView>
       </View>
       <View style={styles.underBar}>
         <View style={[styles.verticalBar, { height: height - 100 }]}>
           <ScrollView>
-            <UsersList
+            <ChatsList
               currentUser={currentUser}
               chats={currentUser.chats}
-              friendStuff={removeFriend}
+              // friendStuff={removeFriend}
               startChat={changeSubject}
               inbox={inbox}
               activeChat={activeChat}

@@ -2,24 +2,21 @@ import { View, StyleSheet, Pressable } from "react-native";
 import Circle from "./Circle";
 
 const UsersList = ({
-  currentUser,
-  chats,
+  // currentUser,
+  users,
   // friendStuff,
   startChat,
-  inbox,
+  // inbox,
   activeChat,
 }) => {
   return (
     <>
-      {chats.map((chat) => (
-        <View key={chat.id} style={styles.container}>
+      {users.map((user) => (
+        <View key={user.id} style={styles.container}>
           <Circle
-            content={chat.users
-              .filter((user) => user.id !== currentUser.id)
-              .map((user) => user.username)
-              .join(", ")}
+            content={user.username}
             style={
-              chat.id === activeChat && {
+              user.id === activeChat && {
                 borderWidth: 2,
                 borderColor: "#000",
               }
@@ -27,7 +24,7 @@ const UsersList = ({
           />
           <Pressable
             style={styles.bottomLeft}
-            onPress={() => startChat(chat.id)}
+            onPress={() => startChat(user.id)}
           >
             <Circle
               style={{
@@ -39,37 +36,6 @@ const UsersList = ({
               content={"💬"}
             />
           </Pressable>
-          <Pressable
-            style={styles.bottomRight}
-            // onPress={() => friendStuff(user)}
-            onPress={() => {}}
-          >
-            <Circle
-              style={{
-                width: 35,
-                height: 35,
-                borderWidth: 1,
-                borderColor: "#fff",
-              }}
-              content={"+"}
-            />
-          </Pressable>
-          {inbox.filter((msg) => msg.data.toId === chat.id).length !== 0 &&
-            chat.id !== activeChat && (
-              <Circle
-                style={[
-                  styles.topRight,
-                  {
-                    width: 35,
-                    height: 35,
-                    backgroundColor: "red",
-                  },
-                ]}
-                content={
-                  inbox.filter((msg) => msg.data.toId === chat.id).length
-                }
-              />
-            )}
         </View>
       ))}
     </>
