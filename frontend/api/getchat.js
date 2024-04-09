@@ -7,6 +7,8 @@ const handleGettingChatHistory = async (
   pageNumber
 ) => {
   try {
+    console.log("getchat.js: chatId: ", chatId);
+
     const realChatId = Array.isArray(chatId)
       ? await handleCreateChat(currentUserId, chatId, token)
       : chatId;

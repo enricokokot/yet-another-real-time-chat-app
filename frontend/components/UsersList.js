@@ -2,26 +2,33 @@ import { View, StyleSheet, Pressable } from "react-native";
 import Circle from "./Circle";
 
 const UsersList = ({
-  users,
-  friendStuff,
+  currentUser,
+  chats,
+  // friendStuff,
   startChat,
   inbox,
-  currentSubject,
+  activeChat,
 }) => {
   return (
     <>
-      {users.map((user) => (
-        <View key={user.id} style={styles.container}>
+      {chats.map((chat) => (
+        <View key={chat.id} style={styles.container}>
           <Circle
-            content={user.username}
+            content={chat.users
+              .filter((user) => user.id !== currentUser.id)
+              .map((user) => user.username)
+              .join(", ")}
             style={
-              user.id === currentSubject.id && {
+              chat.id === activeChat && {
                 borderWidth: 2,
                 borderColor: "#000",
               }
             }
           />
-          <Pressable style={styles.bottomLeft} onPress={() => startChat(user)}>
+          <Pressable
+            style={styles.bottomLeft}
+            onPress={() => startChat(chat.id)}
+          >
             <Circle
               style={{
                 width: 35,
@@ -34,7 +41,8 @@ const UsersList = ({
           </Pressable>
           <Pressable
             style={styles.bottomRight}
-            onPress={() => friendStuff(user)}
+            // onPress={() => friendStuff(user)}
+            onPress={() => {}}
           >
             <Circle
               style={{
@@ -46,8 +54,8 @@ const UsersList = ({
               content={"+"}
             />
           </Pressable>
-          {inbox.filter((msg) => msg.data.fromId === user.id).length !== 0 &&
-            user.id !== currentSubject.id && (
+          {inbox.filter((msg) => msg.data.toId === chat.id).length !== 0 &&
+            chat.id !== activeChat && (
               <Circle
                 style={[
                   styles.topRight,
@@ -58,7 +66,7 @@ const UsersList = ({
                   },
                 ]}
                 content={
-                  inbox.filter((msg) => msg.data.fromId === user.id).length
+                  inbox.filter((msg) => msg.data.toId === chat.id).length
                 }
               />
             )}

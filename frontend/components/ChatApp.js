@@ -17,7 +17,8 @@ import handleOpeningWebSocket from "../api/ws";
 const ChatApp = ({ onLogout, currentUser, token }) => {
   const [friends, setFriends] = useState([]);
   const [others, setOthers] = useState([]);
-  const [currentSubject, setCurrentSubject] = useState("");
+  // const [currentSubject, setCurrentSubject] = useState("");
+  const [activeChat, setActiveChat] = useState(0);
   const [ws, setWs] = useState(null);
   const [inbox, setInbox] = useState([]);
   const [unknownInInbox, setUnknownInInbox] = useState(false);
@@ -40,10 +41,8 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   }, []);
 
   useEffect(() => {
-    setInbox(
-      inbox.filter((message) => message.data.fromId !== currentSubject.id)
-    );
-  }, [currentSubject]);
+    setInbox(inbox.filter((message) => message.data.toId !== activeChat));
+  }, [activeChat]);
 
   useEffect(() => {
     fetchUsers();
@@ -99,8 +98,8 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
     }
   };
 
-  const changeSubject = (user) => {
-    setCurrentSubject(user);
+  const changeSubject = (chatId) => {
+    setActiveChat(chatId);
     setPageNumber(0);
   };
 
@@ -116,29 +115,30 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
           <Circle style={styles.paddedElement} content={currentUser.username} />
         </Pressable>
         <ScrollView horizontal>
-          <UsersList
+          {/* <UsersList
             users={others}
             friendStuff={addFriend}
             startChat={changeSubject}
             inbox={inbox}
-            currentSubject={currentSubject}
-          />
+            activeChat={activeChat}
+          /> */}
         </ScrollView>
       </View>
       <View style={styles.underBar}>
         <View style={[styles.verticalBar, { height: height - 100 }]}>
           <ScrollView>
             <UsersList
-              users={friends}
+              currentUser={currentUser}
+              chats={currentUser.chats}
               friendStuff={removeFriend}
               startChat={changeSubject}
               inbox={inbox}
-              currentSubject={currentSubject}
+              activeChat={activeChat}
             />
           </ScrollView>
         </View>
         <ChatScreen
-          subject={currentSubject}
+          subject={activeChat}
           currentUser={currentUser}
           connection={ws}
           inbox={inbox}

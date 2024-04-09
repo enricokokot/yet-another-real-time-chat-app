@@ -9,6 +9,8 @@ const handleSendMessage = async (requestId, responseId, text, token) => {
     content: text,
   };
 
+  console.log("sendmessage.js: data.toId: ", data.toId);
+
   try {
     const response = await fetch(`http://127.0.0.1:80/message`, {
       method: "POST",

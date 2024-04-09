@@ -86,7 +86,7 @@ const ChatScreen = ({
   const handleSend = async () => {
     const data = {
       fromId: currentUser.id,
-      toId: [subject.id],
+      toId: subject,
       content: text,
     };
 
@@ -115,7 +115,7 @@ const ChatScreen = ({
   const loadMoreItems = async () => {
     const data = await handleGettingChatHistory(
       currentUser.id,
-      [subject.id],
+      subject,
       token,
       pageNumber + 1
     );
