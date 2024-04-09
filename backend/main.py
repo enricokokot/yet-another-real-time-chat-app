@@ -273,11 +273,13 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
             data = await websocket.receive_text()
             loaded_data = json.loads(data)
             if loaded_data["type"] == "connection":
-                    active_connections[loaded_data["data"]["user"]] = websocket
+                    user_id = loaded_data["data"]["user"]
+                    active_connections[user_id] = websocket
                     all_unreads = crud.get_unread_messages(db)
+                    db_user = crud.get_user(db, user_id=user_id)
+                    user_chat_ids = [chat.id for chat in db_user.chats]
                     for unread_message in all_unreads:
-                        print(unread_message)
-                        if unread_message.toId == loaded_data["data"]["user"]:
+                        if unread_message.toId in user_chat_ids and unread_message.fromId != user_id:
                             sent_message = {
                                 "type": "message",
                                 "data": {
@@ -292,15 +294,20 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                             crud.delete_unread_message(db, unread_message.id)
 
             if loaded_data["type"] == "message":
-                if loaded_data["data"]["toId"] in active_connections.keys():
-                    await active_connections[loaded_data["data"]["toId"]].send_text(json.dumps(loaded_data))
-                else:
-                    try:
-                        last_message = crud.get_messages(db, 0, 1)
-                        actual_last_message = last_message[0]
-                        crud.create_unread_message(db, actual_last_message.id + 1)
-                    except:
-                        crud.create_unread_message(db, 1)
+                user_id = loaded_data["data"]["fromId"]
+                chat_id = loaded_data["data"]["toId"]
+                db_chat = crud.get_chat(db, chat_id)
+                users_in_chat = [user.id for user in db_chat.users if user_id != user.id]
+                for user_in_chat in users_in_chat:
+                    if user_in_chat in active_connections.keys():
+                        await active_connections[user_in_chat].send_text(json.dumps(loaded_data))
+                    else:
+                        try:
+                            last_message = crud.get_messages(db, 0, 1)
+                            actual_last_message = last_message[0]
+                            crud.create_unread_message(db, actual_last_message.id + 1)
+                        except:
+                            crud.create_unread_message(db, 1)
     except:
         for key, value in dict(active_connections).items():
             if value == websocket:
