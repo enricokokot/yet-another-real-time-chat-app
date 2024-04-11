@@ -8,6 +8,7 @@ const UsersList = ({
   startChat,
   // inbox,
   activeChat,
+  userSelected,
 }) => {
   const usersYouAlreadyChatWith = currentUser.chats
     .map((chat) =>
@@ -24,7 +25,8 @@ const UsersList = ({
             <Circle
               content={user.username}
               style={
-                user.id === activeChat && {
+                user.id === activeChat &&
+                userSelected && {
                   borderWidth: 2,
                   borderColor: "#000",
                 }

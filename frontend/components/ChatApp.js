@@ -137,6 +137,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
             startChat={changeSubject}
             inbox={inbox}
             activeChat={activeChat}
+            userSelected={userSelected}
           />
         </ScrollView>
       </View>
@@ -150,6 +151,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
               startChat={changeSubject}
               inbox={inbox}
               activeChat={activeChat}
+              userSelected={userSelected}
             />
           </ScrollView>
         </View>

@@ -8,6 +8,7 @@ const ChatsList = ({
   startChat,
   inbox,
   activeChat,
+  userSelected,
 }) => {
   return (
     <>
@@ -19,7 +20,8 @@ const ChatsList = ({
               .map((user) => user.username)
               .join(", ")}
             style={
-              chat.id === activeChat && {
+              chat.id === activeChat &&
+              !userSelected && {
                 borderWidth: 2,
                 borderColor: "#000",
               }
