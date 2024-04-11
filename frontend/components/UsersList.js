@@ -32,7 +32,7 @@ const UsersList = ({
             />
             <Pressable
               style={styles.bottomLeft}
-              onPress={() => startChat(user.id)}
+              onPress={() => startChat(user.id, true)}
             >
               <Circle
                 style={{

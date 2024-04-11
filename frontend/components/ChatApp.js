@@ -26,6 +26,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const [unknownInInbox, setUnknownInInbox] = useState(false);
   const { height } = useWindowDimensions();
   const [pageNumber, setPageNumber] = useState(0);
+  const [userSelected, setUserSelected] = useState(false);
 
   const openWebSocket = () => {
     const ws = handleOpeningWebSocket(
@@ -107,7 +108,8 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   //   }
   // };
 
-  const changeSubject = (chatId) => {
+  const changeSubject = (chatId, isUserSelected) => {
+    setUserSelected(isUserSelected);
     setActiveChat(chatId);
     setPageNumber(0);
   };
@@ -156,6 +158,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
           pageNumber={pageNumber}
           setPageNumber={setPageNumber}
           setInbox={setInbox}
+          isUserSelected={userSelected}
         />
       </View>
     </View>

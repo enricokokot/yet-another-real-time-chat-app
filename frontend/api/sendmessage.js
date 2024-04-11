@@ -1,11 +1,7 @@
-import handleCreateChat from "./createchat";
-
 const handleSendMessage = async (requestId, responseId, text, token) => {
   const data = {
     fromId: requestId,
-    toId: Array.isArray(responseId)
-      ? await handleCreateChat(requestId, responseId, token)
-      : responseId,
+    toId: responseId,
     content: text,
   };
 

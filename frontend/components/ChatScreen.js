@@ -4,6 +4,7 @@ import ChatHistory from "./ChatHistory";
 import handleGettingChatHistory from "../api/getchat";
 import handleSendMessage from "../api/sendmessage";
 import Circle from "./Circle";
+import handleCreateChat from "../api/createchat";
 
 const ChatScreen = ({
   subject,
@@ -14,6 +15,7 @@ const ChatScreen = ({
   pageNumber,
   setPageNumber,
   setInbox,
+  isUserSelected,
 }) => {
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
@@ -69,9 +71,18 @@ const ChatScreen = ({
   };
 
   const handleSend = async () => {
+    const containsNewSubject = [];
+    if (isUserSelected) {
+      const aNewChat = await handleCreateChat(currentUser.id, [subject], token);
+      containsNewSubject.push(aNewChat);
+    } else {
+      containsNewSubject.push(subject);
+    }
+    console.log("ChatScreen.js: containsNewSubject: ", containsNewSubject);
+    const newSubject = containsNewSubject[0];
     const data = {
       fromId: currentUser.id,
-      toId: subject,
+      toId: newSubject,
       content: text,
     };
 
@@ -84,12 +95,12 @@ const ChatScreen = ({
 
     connection.send(JSON.stringify(wholeData));
 
-    await handleSendMessage(data.fromId, data.toId, data.content, token);
+    await handleSendMessage(data.fromId, newSubject, data.content, token);
     setCurrentChat((previousChat) => [
       {
         id: currentChat.length ? currentChat[0].id + 1 : 1,
         fromId: currentUser.id,
-        toId: subject,
+        toId: newSubject,
         content: text,
         // createdAt: new Date().toISOString(),
       },

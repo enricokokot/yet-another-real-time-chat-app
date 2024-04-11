@@ -27,7 +27,7 @@ const ChatsList = ({
           />
           <Pressable
             style={styles.bottomLeft}
-            onPress={() => startChat(chat.id)}
+            onPress={() => startChat(chat.id, false)}
           >
             <Circle
               style={{
