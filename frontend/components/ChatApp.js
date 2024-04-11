@@ -27,6 +27,9 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const { height } = useWindowDimensions();
   const [pageNumber, setPageNumber] = useState(0);
   const [userSelected, setUserSelected] = useState(false);
+  const [chats, setChats] = useState([]);
+
+  console.log("ChatApp.js: chats: ", chats);
 
   const openWebSocket = () => {
     const ws = handleOpeningWebSocket(
@@ -42,6 +45,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
     console.log("oye");
     openWebSocket();
     fetchUsers();
+    setChats(currentUser.chats);
   }, []);
 
   useEffect(() => {
@@ -141,7 +145,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
           <ScrollView>
             <ChatsList
               currentUser={currentUser}
-              chats={currentUser.chats}
+              chats={chats}
               // friendStuff={removeFriend}
               startChat={changeSubject}
               inbox={inbox}
@@ -159,6 +163,10 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
           setPageNumber={setPageNumber}
           setInbox={setInbox}
           isUserSelected={userSelected}
+          setUsersExceptUser={setUsersExceptUser}
+          setChats={setChats}
+          usersExceptUser={usersExceptUser}
+          changeSubject={changeSubject}
         />
       </View>
     </View>

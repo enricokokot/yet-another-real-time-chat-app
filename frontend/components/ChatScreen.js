@@ -16,6 +16,10 @@ const ChatScreen = ({
   setPageNumber,
   setInbox,
   isUserSelected,
+  setUsersExceptUser,
+  setChats,
+  usersExceptUser,
+  changeSubject,
 }) => {
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
@@ -73,7 +77,25 @@ const ChatScreen = ({
   const handleSend = async () => {
     const containsNewSubject = [];
     if (isUserSelected) {
+      setUsersExceptUser((previousUsers) =>
+        previousUsers.filter((user) => user.id !== subject)
+      );
       const aNewChat = await handleCreateChat(currentUser.id, [subject], token);
+      setChats((previousChats) => [
+        {
+          id: aNewChat,
+          users: [
+            { id: currentUser.id, username: currentUser.username },
+            {
+              id: subject,
+              username: usersExceptUser.filter((user) => user.id === subject)[0]
+                .username,
+            },
+          ],
+        },
+        ...previousChats,
+      ]);
+      changeSubject(aNewChat);
       containsNewSubject.push(aNewChat);
     } else {
       containsNewSubject.push(subject);
