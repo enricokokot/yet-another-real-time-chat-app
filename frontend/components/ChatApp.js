@@ -14,6 +14,7 @@ import UsersList from "./UsersList";
 import ChatScreen from "./ChatScreen";
 import handleOpeningWebSocket from "../api/ws";
 import ChatsList from "./ChatsList";
+import ChatMaker from "./ChatMaker";
 
 const ChatApp = ({ onLogout, currentUser, token }) => {
   // const [friends, setFriends] = useState([]);
@@ -28,6 +29,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const [pageNumber, setPageNumber] = useState(0);
   const [userSelected, setUserSelected] = useState(false);
   const [chats, setChats] = useState([]);
+  const [visibilityOfModal, setVisibilityOfModal] = useState(true);
 
   const openWebSocket = () => {
     const ws = handleOpeningWebSocket(currentUser.id, setInbox);
@@ -140,8 +142,21 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
     onLogout();
   };
 
+  const showModal = () => {
+    setVisibilityOfModal(true);
+  };
+
   return (
     <View style={styles.container}>
+      {visibilityOfModal && (
+        <>
+          <ChatMaker style={styles.modal} users={usersExceptUser}></ChatMaker>
+          <Pressable
+            style={styles.pressabelModalBackground}
+            onPress={() => setVisibilityOfModal(false)}
+          ></Pressable>
+        </>
+      )}
       <View style={styles.horizontalBar}>
         <Pressable onPress={() => submit()}>
           <Circle style={styles.paddedElement} content={currentUser.username} />
@@ -160,6 +175,9 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
       </View>
       <View style={styles.underBar}>
         <View style={[styles.verticalBar, { height: height - 100 }]}>
+          <Pressable onPress={() => showModal()}>
+            <Circle content={"+"} />
+          </Pressable>
           <ScrollView>
             <ChatsList
               currentUser={currentUser}
@@ -217,6 +235,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#e8f3fd",
     alignItems: "center",
     paddingTop: 10,
+  },
+  pressabelModalBackground: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "black",
+    position: "absolute",
+    zIndex: 1,
+    opacity: 0.2,
+  },
+  modal: {
+    width: "50%",
+    height: "50%",
+    position: "absolute",
+    top: "25%",
+    left: "25%",
+    zIndex: 2,
   },
 });
 
