@@ -65,7 +65,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
           { id: currentUser.id, username: currentUser.username },
           {
             id: lastMessage.data.fromId,
-            username: "x",
+            username: lastMessage.data.fromId,
           },
         ],
       },
@@ -186,6 +186,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
           setChats={setChats}
           usersExceptUser={usersExceptUser}
           changeSubject={changeSubject}
+          chats={chats}
         />
       </View>
     </View>

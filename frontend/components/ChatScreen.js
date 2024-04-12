@@ -20,6 +20,7 @@ const ChatScreen = ({
   setChats,
   usersExceptUser,
   changeSubject,
+  chats,
 }) => {
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
@@ -27,7 +28,7 @@ const ChatScreen = ({
   const [newMessageReceived, setNewMessageReceived] = useState(false);
 
   useEffect(() => {
-    if (currentUser.chats.map((chat) => chat.id).includes(subject)) {
+    if (chats.map((chat) => chat.id).includes(subject)) {
       getChatHistory(currentUser.username, subject);
     } else {
       setCurrentChat([]);
