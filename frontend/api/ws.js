@@ -1,9 +1,4 @@
-const handleOpeningWebSocket = (
-  currentUserUsername,
-  setInbox,
-  users,
-  setUnknownInInbox
-) => {
+const handleOpeningWebSocket = (currentUserUsername, setInbox) => {
   const ws = new WebSocket("ws://localhost:80/ws");
 
   ws.onopen = () => {
@@ -19,11 +14,6 @@ const handleOpeningWebSocket = (
 
   ws.onmessage = (e) => {
     console.log("a message was received");
-    if (
-      !users.map((user) => user.id).includes(JSON.parse(e.data).data.fromId)
-    ) {
-      setUnknownInInbox((prev) => !prev);
-    }
     setInbox((prev) => [...prev, JSON.parse(e.data)]);
     console.log(e.data);
   };

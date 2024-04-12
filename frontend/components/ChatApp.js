@@ -29,23 +29,15 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const [userSelected, setUserSelected] = useState(false);
   const [chats, setChats] = useState([]);
 
-  console.log("ChatApp.js: chats: ", chats);
-
   const openWebSocket = () => {
-    const ws = handleOpeningWebSocket(
-      currentUser.id,
-      setInbox,
-      usersExceptUser,
-      setUnknownInInbox
-    );
+    const ws = handleOpeningWebSocket(currentUser.id, setInbox);
     setWs(ws);
   };
 
   useEffect(() => {
-    console.log("oye");
+    setChats(currentUser.chats);
     openWebSocket();
     fetchUsers();
-    setChats(currentUser.chats);
   }, []);
 
   useEffect(() => {
@@ -53,7 +45,32 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   }, [activeChat]);
 
   useEffect(() => {
-    fetchUsers();
+    if (inbox.length === 0) return;
+    if (
+      !chats.map((chat) => chat.id).includes(inbox[inbox.length - 1].data.toId)
+    ) {
+      console.log("unknown in inbox!");
+      setUnknownInInbox((prev) => !prev);
+    }
+  }, [inbox]);
+
+  useEffect(() => {
+    // fetchUsers();
+    const lastMessage = inbox[inbox.length - 1];
+    if (!lastMessage) return;
+    setChats((previousChats) => [
+      {
+        id: lastMessage.data.toId,
+        users: [
+          { id: currentUser.id, username: currentUser.username },
+          {
+            id: lastMessage.data.fromId,
+            username: "x",
+          },
+        ],
+      },
+      ...previousChats,
+    ]);
   }, [unknownInInbox]);
 
   const fetchUsers = async () => {
