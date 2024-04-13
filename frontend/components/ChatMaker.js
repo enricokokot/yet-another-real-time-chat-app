@@ -16,6 +16,12 @@ const ChatMaker = ({ style, users, createChat }) => {
     setUnselectedUsers((prev) => [...prev, user]);
   };
 
+  const tryCreatingChat = (users) => {
+    if (selectedUsers.length) {
+      createChat(users);
+    }
+  };
+
   return (
     <View style={[style, styles.modal]}>
       <Text style={styles.titleText}>Create Chat</Text>
@@ -51,8 +57,15 @@ const ChatMaker = ({ style, users, createChat }) => {
         ))}
       </ScrollView>
       <View style={styles.submitButton}>
-        <Pressable onPress={() => createChat(selectedUsers)}>
-          <Text style={{ fontWeight: "bold" }}>CREATE</Text>
+        <Pressable onPress={() => tryCreatingChat(selectedUsers)}>
+          <Text
+            style={{
+              fontWeight: "bold",
+              opacity: selectedUsers.length ? 1 : 0.15,
+            }}
+          >
+            CREATE
+          </Text>
         </Pressable>
       </View>
     </View>
