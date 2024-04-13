@@ -21,7 +21,7 @@ const handleCreateChat = async (requestId, responseId, token) => {
     if (responseData == `{"message": "Request failed, need both user ids."}`) {
       throw new Error(responseData);
     }
-    return responseData.id;
+    return responseData;
   } catch (error) {
     throw new Error(error.message);
   }

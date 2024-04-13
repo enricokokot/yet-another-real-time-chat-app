@@ -10,7 +10,7 @@ const handleGettingChatHistory = async (
     console.log("getchat.js: chatId: ", chatId);
 
     const realChatId = Array.isArray(chatId)
-      ? await handleCreateChat(currentUserId, chatId, token)
+      ? await handleCreateChat(currentUserId, chatId, token).id
       : chatId;
     const response = await fetch(
       `http://127.0.0.1:80/message/${realChatId}/?skip=${

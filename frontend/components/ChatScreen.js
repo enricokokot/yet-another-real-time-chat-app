@@ -84,20 +84,13 @@ const ChatScreen = ({
       const aNewChat = await handleCreateChat(currentUser.id, [subject], token);
       setChats((previousChats) => [
         {
-          id: aNewChat,
-          users: [
-            { id: currentUser.id, username: currentUser.username },
-            {
-              id: subject,
-              username: usersExceptUser.filter((user) => user.id === subject)[0]
-                .username,
-            },
-          ],
+          id: aNewChat.id,
+          users: aNewChat.users,
         },
         ...previousChats,
       ]);
-      changeSubject(aNewChat);
-      containsNewSubject.push(aNewChat);
+      changeSubject(aNewChat.id);
+      containsNewSubject.push(aNewChat.id);
     } else {
       containsNewSubject.push(subject);
     }

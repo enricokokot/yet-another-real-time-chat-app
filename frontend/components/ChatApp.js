@@ -15,6 +15,7 @@ import ChatScreen from "./ChatScreen";
 import handleOpeningWebSocket from "../api/ws";
 import ChatsList from "./ChatsList";
 import ChatMaker from "./ChatMaker";
+import handleCreateChat from "../api/createchat";
 
 const ChatApp = ({ onLogout, currentUser, token }) => {
   // const [friends, setFriends] = useState([]);
@@ -29,7 +30,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const [pageNumber, setPageNumber] = useState(0);
   const [userSelected, setUserSelected] = useState(false);
   const [chats, setChats] = useState([]);
-  const [visibilityOfModal, setVisibilityOfModal] = useState(true);
+  const [visibilityOfModal, setVisibilityOfModal] = useState(false);
 
   const openWebSocket = () => {
     const ws = handleOpeningWebSocket(currentUser.id, setInbox);
@@ -137,6 +138,16 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
     setPageNumber(0);
   };
 
+  const createChat = async (selectedUsers) => {
+    const newChat = await handleCreateChat(
+      currentUser.id,
+      selectedUsers.map((user) => user.id),
+      token
+    );
+    if (chats.map((chat) => chat.id).includes(newChat.id)) return;
+    setChats((previousChats) => [...previousChats, newChat]);
+  };
+
   const submit = () => {
     ws.close();
     onLogout();
@@ -150,7 +161,11 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
     <View style={styles.container}>
       {visibilityOfModal && (
         <>
-          <ChatMaker style={styles.modal} users={usersExceptUser}></ChatMaker>
+          <ChatMaker
+            style={styles.modal}
+            users={usersExceptUser}
+            createChat={createChat}
+          ></ChatMaker>
           <Pressable
             style={styles.pressabelModalBackground}
             onPress={() => setVisibilityOfModal(false)}
