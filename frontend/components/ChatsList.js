@@ -10,6 +10,7 @@ const ChatsList = ({
   activeChat,
   userSelected,
 }) => {
+  console.log("ChatsList.js: chats: ", chats);
   return (
     <>
       {chats.map((chat) => (

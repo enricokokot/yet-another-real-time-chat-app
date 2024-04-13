@@ -16,6 +16,7 @@ import handleOpeningWebSocket from "../api/ws";
 import ChatsList from "./ChatsList";
 import ChatMaker from "./ChatMaker";
 import handleCreateChat from "../api/createchat";
+import handleFetchChat from "../api/fetchchat";
 
 const ChatApp = ({ onLogout, currentUser, token }) => {
   // const [friends, setFriends] = useState([]);
@@ -61,20 +62,14 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
     // fetchUsers();
     const lastMessage = inbox[inbox.length - 1];
     if (!lastMessage) return;
-    setChats((previousChats) => [
-      {
-        id: lastMessage.data.toId,
-        users: [
-          { id: currentUser.id, username: currentUser.username },
-          {
-            id: lastMessage.data.fromId,
-            username: lastMessage.data.fromId,
-          },
-        ],
-      },
-      ...previousChats,
-    ]);
+    newChat = fetchChat(lastMessage.data.toId);
   }, [unknownInInbox]);
+
+  const fetchChat = async (chatId) => {
+    const newChat = await handleFetchChat(chatId, token);
+    console.log("ChatApp.js: fetchChat: newChat: ", newChat);
+    setChats((previousChats) => [newChat, ...previousChats]);
+  };
 
   const fetchUsers = async () => {
     try {
