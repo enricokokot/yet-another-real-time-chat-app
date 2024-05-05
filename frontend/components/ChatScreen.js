@@ -125,6 +125,10 @@ const ChatScreen = ({
   };
 
   const loadMoreItems = async () => {
+    if (isUserSelected) {
+      setCurrentChat([]);
+      return;
+    }
     const data = await handleGettingChatHistory(
       currentUser.id,
       subject,
