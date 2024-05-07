@@ -27,7 +27,7 @@ const ChatMaker = ({ style, users, createChat }) => {
       <Text style={styles.titleText}>Create Chat</Text>
       <ScrollView
         horizontal
-        style={[styles.userList, { backgroundColor: "red" }]}
+        style={styles.userList}
         contentContainerStyle={{
           justifyContent: "center",
           alignItems: "center",
@@ -45,7 +45,7 @@ const ChatMaker = ({ style, users, createChat }) => {
       </ScrollView>
       <ScrollView
         horizontal
-        style={[styles.userList, { backgroundColor: "green" }]}
+        style={styles.userList}
         contentContainerStyle={{
           justifyContent: "center",
           alignItems: "center",
