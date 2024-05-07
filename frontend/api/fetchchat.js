@@ -1,27 +1,18 @@
-const handleSendMessage = async (requestId, responseId, text, token) => {
-  const data = {
-    fromId: requestId,
-    toId: responseId,
-    content: text,
-  };
-
-  console.log("sendmessage.js: data.toId: ", data.toId);
-
+const handleFetchChat = async (chatId, token) => {
   try {
-    const response = await fetch(`http://127.0.0.1:80/message`, {
-      method: "POST",
+    const response = await fetch(`http://127.0.0.1:80/chat/${chatId}`, {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
     });
 
     if (!response.ok) {
       throw new Error("Failed to fetch. Please try again.");
     }
 
-    const responseData = await response.text();
+    const responseData = await response.json();
 
     if (responseData == `{"message": "Request failed, need both user ids."}`) {
       throw new Error(responseData);
@@ -32,4 +23,4 @@ const handleSendMessage = async (requestId, responseId, text, token) => {
   }
 };
 
-export default handleSendMessage;
+export default handleFetchChat;

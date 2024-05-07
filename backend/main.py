@@ -28,6 +28,7 @@ app = FastAPI()
 origins = [
     "http://localhost",
     "http://localhost:8173",
+    "http://localhost:8081",
 ]
 
 app.add_middleware(
@@ -109,7 +110,7 @@ async def remove_friend(the_user: Annotated[schemas.User, Depends(get_current_us
     return newUser
 
 
-@app.post("/message/")
+@app.post("/old-message/")
 async def create_message(the_user: Annotated[schemas.User, Depends(get_current_user)], message: schemas.MessageCreate, db: Session = Depends(get_db)):
     from_user = crud.get_user(db, user_id=message.fromId)
     to_user = crud.get_user(db, user_id=message.toId)
@@ -120,12 +121,37 @@ async def create_message(the_user: Annotated[schemas.User, Depends(get_current_u
     return crud.create_message(db=db, message=message)
 
 
+@app.get("/chat/{chat_id}", response_model=schemas.Chat)
+async def read_chat(the_user: Annotated[schemas.User, Depends(get_current_user)], chat_id: int, db: Session = Depends(get_db)):
+    chat = crud.get_chat(db, chat_id=chat_id)
+    if chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    return chat
+
+
+@app.post("/chat/", response_model=schemas.Chat)
+async def create_chat(the_user: Annotated[schemas.User, Depends(get_current_user)], chat: schemas.ChatCreate, db: Session = Depends(get_db)):
+    if len(chat.users) < 2:
+        raise HTTPException(status_code=400, detail="Chat must have at least 2 users")
+    if the_user.id not in chat.users:
+        raise HTTPException(status_code=400, detail="User creating chat not in chat")
+    chats_restrutured = {chat.id: [user.id for user in chat.users] for chat in the_user.chats}
+    for local_id, local_chat in chats_restrutured.items():
+        if local_chat == sorted(chat.users):
+            # raise HTTPException(status_code=400, detail="Chat already exists", chat_id=local_id)
+            return crud.get_chat(db, chat_id=local_id)
+    for user_id in chat.users:
+        if crud.get_user(db, user_id=user_id) is None:
+            raise HTTPException(status_code=404, detail="User not found")
+    return crud.create_chat(db=db, participants=chat.users)
+
+
 @app.get("/message/")
 async def read_messages(the_user: Annotated[schemas.User, Depends(get_current_user)], db: Session = Depends(get_db)):
     return crud.get_messages(db)
 
 
-@app.get("/message/{fromId}/{toId}")
+@app.get("/old-message/{fromId}/{toId}")
 async def read_messages_from_chat(the_user: Annotated[schemas.User, Depends(get_current_user)], fromId, toId, db: Session = Depends(get_db), skip: int = 0, limit: int = 1000):
     from_user = crud.get_user_by_username(db, username=fromId)
     to_user = crud.get_user_by_username(db, username=toId)
@@ -134,6 +160,36 @@ async def read_messages_from_chat(the_user: Annotated[schemas.User, Depends(get_
     if from_user == to_user:
         raise HTTPException(status_code=400, detail="Cannot send message to self")
     return crud.get_messages_from_chat(db, from_user.id, to_user.id, skip, limit)
+
+
+@app.post("/message/")
+async def create_message(the_user: Annotated[schemas.User, Depends(get_current_user)], message: schemas.MessageCreate, db: Session = Depends(get_db)):
+    from_user = crud.get_user(db, user_id=message.fromId)
+    if isinstance(message.toId, list):
+        if len(message.toId) == 1 and message.toId[0] == from_user.id:
+            raise HTTPException(status_code=400, detail="Cannot send message to self")
+        ids_in_chats = {chat.id: sorted([user.id for user in chat.users]) for chat in from_user.chats}
+        if sorted([message.fromId] + message.toId) in ids_in_chats.values():
+            chat_id = list(ids_in_chats.values()).index(sorted([message.fromId] + message.toId)) + 1
+            to_chat = crud.get_chat(db, chat_id)
+        else:
+            to_chat = crud.create_chat(db, participants=[message.fromId]+message.toId)
+    else:
+        to_chat = crud.get_chat(db, chat_id=message.toId)
+    if from_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    if to_chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    created_message = {**message.dict(), "toId": to_chat.id}
+    return crud.create_message(db=db, message=created_message)
+
+
+@app.get("/message/{chat_id}")
+async def read_messages_from_chat(the_user: Annotated[schemas.User, Depends(get_current_user)], chat_id, db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+    to_chat = crud.get_chat(db, chat_id=chat_id)
+    if to_chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    return crud.get_messages_from_chat(db, to_chat, skip, limit)
 
 
 def verify_password(plain_password: str, hashed_password: str):
@@ -217,10 +273,13 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
             data = await websocket.receive_text()
             loaded_data = json.loads(data)
             if loaded_data["type"] == "connection":
-                    active_connections[loaded_data["data"]["user"]] = websocket
-                    all_unreads = crud.get_unread_messages(db)
+                    user_id = loaded_data["data"]["user"]
+                    active_connections[user_id] = websocket
+                    all_unreads = crud.get_unread_messages_of_user(db, user_id)
+                    db_user = crud.get_user(db, user_id=user_id)
+                    user_chat_ids = [chat.id for chat in db_user.chats]
                     for unread_message in all_unreads:
-                        if unread_message.toId == loaded_data["data"]["user"]:
+                        if unread_message.toId in user_chat_ids and unread_message.fromId != user_id:
                             sent_message = {
                                 "type": "message",
                                 "data": {
@@ -232,18 +291,23 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                                 }
                             }
                             await websocket.send_text(json.dumps(sent_message))
-                            crud.delete_unread_message(db, unread_message.id)
+                            crud.delete_unread_message(db, unread_message.id, user_id)
 
             if loaded_data["type"] == "message":
-                if loaded_data["data"]["toId"] in active_connections.keys():
-                    await active_connections[loaded_data["data"]["toId"]].send_text(json.dumps(loaded_data))
-                else:
-                    try:
-                        last_message = crud.get_messages(db, 0, 1)
-                        actual_last_message = last_message[0]
-                        crud.create_unread_message(db, actual_last_message.id + 1)
-                    except:
-                        crud.create_unread_message(db, 1)
+                user_id = loaded_data["data"]["fromId"]
+                chat_id = loaded_data["data"]["toId"]
+                db_chat = crud.get_chat(db, chat_id)
+                users_in_chat = [user.id for user in db_chat.users if user_id != user.id]
+                for user_in_chat in users_in_chat:
+                    if user_in_chat in active_connections.keys():
+                        await active_connections[user_in_chat].send_text(json.dumps(loaded_data))
+                    else:
+                        try:
+                            last_message = crud.get_messages(db, 0, 1)
+                            actual_last_message = last_message[0]
+                            crud.create_unread_message(db, actual_last_message.id + 1, user_in_chat)
+                        except:
+                            crud.create_unread_message(db, 1, user_in_chat)
     except:
         for key, value in dict(active_connections).items():
             if value == websocket:

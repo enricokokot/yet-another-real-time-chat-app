@@ -2,68 +2,52 @@ import { View, StyleSheet, Pressable } from "react-native";
 import Circle from "./Circle";
 
 const UsersList = ({
+  currentUser,
   users,
-  friendStuff,
+  // friendStuff,
   startChat,
-  inbox,
-  currentSubject,
+  // inbox,
+  activeChat,
+  userSelected,
 }) => {
+  const usersYouAlreadyChatWith = currentUser.chats
+    .map((chat) =>
+      chat.users.map((user) => user.id).filter((id) => id !== currentUser.id)
+    )
+    .filter((chat) => chat.length === 1)
+    .map((chat) => chat[0]);
   return (
     <>
-      {users.map((user) => (
-        <View key={user.id} style={styles.container}>
-          <Circle
-            content={user.username}
-            style={
-              user.id === currentSubject.id && {
-                borderWidth: 2,
-                borderColor: "#000",
-              }
-            }
-          />
-          <Pressable style={styles.bottomLeft} onPress={() => startChat(user)}>
+      {users
+        .filter((user) => !usersYouAlreadyChatWith.includes(user.id))
+        .map((user) => (
+          <View key={user.id} style={styles.container}>
             <Circle
-              style={{
-                width: 35,
-                height: 35,
-                borderWidth: 1,
-                borderColor: "#fff",
-              }}
-              content={"💬"}
-            />
-          </Pressable>
-          <Pressable
-            style={styles.bottomRight}
-            onPress={() => friendStuff(user)}
-          >
-            <Circle
-              style={{
-                width: 35,
-                height: 35,
-                borderWidth: 1,
-                borderColor: "#fff",
-              }}
-              content={"+"}
-            />
-          </Pressable>
-          {inbox.filter((msg) => msg.data.fromId === user.id).length !== 0 &&
-            user.id !== currentSubject.id && (
-              <Circle
-                style={[
-                  styles.topRight,
-                  {
-                    width: 35,
-                    height: 35,
-                    backgroundColor: "red",
-                  },
-                ]}
-                content={
-                  inbox.filter((msg) => msg.data.fromId === user.id).length
+              content={user.username}
+              style={
+                user.id === activeChat &&
+                userSelected && {
+                  borderWidth: 2,
+                  borderColor: "#000",
                 }
+              }
+            />
+            <Pressable
+              style={styles.bottomLeft}
+              onPress={() => startChat(user.id, true)}
+            >
+              <Circle
+                style={{
+                  width: 35,
+                  height: 35,
+                  borderWidth: 1,
+                  borderColor: "#fff",
+                }}
+                content={"💬"}
               />
-            )}
-        </View>
-      ))}
+            </Pressable>
+          </View>
+        ))}
     </>
   );
 };

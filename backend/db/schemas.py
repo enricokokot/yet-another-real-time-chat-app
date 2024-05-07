@@ -17,9 +17,22 @@ class UserFriend(UserBase):
         orm_mode = True
 
 
+class ChatCreate(BaseModel):
+    users: List[int] = Field(default_factory=list)
+
+
+class Chat(BaseModel):
+    id: int
+    users: List[UserFriend] = Field(default_factory=list)
+
+    class Config:
+        orm_mode = True
+
+
 class User(UserBase):
     id: int
     friends: List[UserFriend] = Field(default_factory=list)
+    chats: List[Chat] = Field(default_factory=list)
 
     class Config:
         orm_mode = True
@@ -30,8 +43,10 @@ class MessageBase(BaseModel):
     toId: int
     content: str
 
+
 class MessageCreate(MessageBase):
     pass
+
 
 class Message(MessageBase):
     id: int
@@ -40,22 +55,28 @@ class Message(MessageBase):
     class Config:
         orm_mode = True
 
+
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
     username: str | None = None
+
 
 class UserInfo(BaseModel):
     username: str
     password: str
 
+
 class NewUserInfo(UserInfo):
     passwordAgain: str
 
+
 class UnreadMessage(BaseModel):
     message_id: int
+    user_id: int
 
     class Config:
         orm_mode = True

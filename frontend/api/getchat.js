@@ -1,12 +1,19 @@
+import handleCreateChat from "./createchat";
+
 const handleGettingChatHistory = async (
-  requestId,
-  responseId,
+  currentUserId,
+  chatId,
   token,
   pageNumber
 ) => {
   try {
+    console.log("getchat.js: chatId: ", chatId);
+
+    const realChatId = Array.isArray(chatId)
+      ? await handleCreateChat(currentUserId, chatId, token).id
+      : chatId;
     const response = await fetch(
-      `http://127.0.0.1:80/message/${requestId}/${responseId}/?skip=${
+      `http://127.0.0.1:80/message/${realChatId}/?skip=${
         pageNumber * 15
       }&limit=15`,
       {

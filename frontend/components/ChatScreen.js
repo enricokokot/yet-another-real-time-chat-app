@@ -4,6 +4,7 @@ import ChatHistory from "./ChatHistory";
 import handleGettingChatHistory from "../api/getchat";
 import handleSendMessage from "../api/sendmessage";
 import Circle from "./Circle";
+import handleCreateChat from "../api/createchat";
 
 const ChatScreen = ({
   subject,
@@ -14,6 +15,12 @@ const ChatScreen = ({
   pageNumber,
   setPageNumber,
   setInbox,
+  isUserSelected,
+  setUsersExceptUser,
+  setChats,
+  usersExceptUser,
+  changeSubject,
+  chats,
 }) => {
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
@@ -21,13 +28,17 @@ const ChatScreen = ({
   const [newMessageReceived, setNewMessageReceived] = useState(false);
 
   useEffect(() => {
-    getChatHistory(currentUser.username, subject.username);
+    if (chats.map((chat) => chat.id).includes(subject)) {
+      getChatHistory(currentUser.username, subject);
+    } else {
+      setCurrentChat([]);
+    }
   }, [subject]);
 
   useEffect(() => {
     if (
       inbox.length !== 0 &&
-      inbox.map((message) => message.data.fromId).includes(subject.id)
+      inbox.map((message) => message.data.toId).includes(subject)
     ) {
       const newMessage = {
         ...inbox[inbox.length - 1].data,
@@ -40,7 +51,7 @@ const ChatScreen = ({
 
   useEffect(() => {
     setInbox((previousInbox) =>
-      previousInbox.filter((message) => message.data.fromId !== subject.id)
+      previousInbox.filter((message) => message.data.toId !== subject)
     );
   }, [newMessageReceived]);
 
@@ -51,7 +62,7 @@ const ChatScreen = ({
     }
     try {
       const data = await handleGettingChatHistory(
-        user,
+        currentUser.id,
         subject,
         token,
         pageNumber
@@ -65,9 +76,29 @@ const ChatScreen = ({
   };
 
   const handleSend = async () => {
+    const containsNewSubject = [];
+    if (isUserSelected) {
+      setUsersExceptUser((previousUsers) =>
+        previousUsers.filter((user) => user.id !== subject)
+      );
+      const aNewChat = await handleCreateChat(currentUser.id, [subject], token);
+      setChats((previousChats) => [
+        {
+          id: aNewChat.id,
+          users: aNewChat.users,
+        },
+        ...previousChats,
+      ]);
+      changeSubject(aNewChat.id);
+      containsNewSubject.push(aNewChat.id);
+    } else {
+      containsNewSubject.push(subject);
+    }
+    console.log("ChatScreen.js: containsNewSubject: ", containsNewSubject);
+    const newSubject = containsNewSubject[0];
     const data = {
       fromId: currentUser.id,
-      toId: subject.id,
+      toId: newSubject,
       content: text,
     };
 
@@ -80,12 +111,12 @@ const ChatScreen = ({
 
     connection.send(JSON.stringify(wholeData));
 
-    await handleSendMessage(currentUser.id, subject.id, text, token);
+    await handleSendMessage(data.fromId, newSubject, data.content, token);
     setCurrentChat((previousChat) => [
       {
         id: currentChat.length ? currentChat[0].id + 1 : 1,
         fromId: currentUser.id,
-        toId: subject.id,
+        toId: newSubject,
         content: text,
         // createdAt: new Date().toISOString(),
       },
@@ -94,9 +125,13 @@ const ChatScreen = ({
   };
 
   const loadMoreItems = async () => {
+    if (isUserSelected) {
+      setCurrentChat([]);
+      return;
+    }
     const data = await handleGettingChatHistory(
-      currentUser.username,
-      subject.username,
+      currentUser.id,
+      subject,
       token,
       pageNumber + 1
     );
