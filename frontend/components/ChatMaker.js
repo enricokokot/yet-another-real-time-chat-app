@@ -34,8 +34,12 @@ const ChatMaker = ({ style, users, createChat }) => {
         }}
       >
         {unselectedUsers.map((user) => (
-          <Pressable onPress={addUserToChat(user)} style={styles.userInList}>
-            <Circle key={user.id} content={user.username} />
+          <Pressable
+            key={user.id}
+            onPress={addUserToChat(user)}
+            style={styles.userInList}
+          >
+            <Circle content={user.username} />
           </Pressable>
         ))}
       </ScrollView>
@@ -49,10 +53,11 @@ const ChatMaker = ({ style, users, createChat }) => {
       >
         {selectedUsers.map((user) => (
           <Pressable
+            key={user.id}
             onPress={removeUserFromChat(user)}
             style={styles.userInList}
           >
-            <Circle key={user.id} content={user.username} />
+            <Circle content={user.username} />
           </Pressable>
         ))}
       </ScrollView>
