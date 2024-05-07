@@ -76,6 +76,7 @@ class NewUserInfo(UserInfo):
 
 class UnreadMessage(BaseModel):
     message_id: int
+    user_id: int
 
     class Config:
         orm_mode = True

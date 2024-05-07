@@ -50,6 +50,7 @@ class UnreadMessage(Base):
     __tablename__ = "unread"
 
     message_id = Column(Integer, ForeignKey('messages.id'), primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
 
 
 class Chat(Base):

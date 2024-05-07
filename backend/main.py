@@ -291,7 +291,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                                 }
                             }
                             await websocket.send_text(json.dumps(sent_message))
-                            crud.delete_unread_message(db, unread_message.id)
+                            crud.delete_unread_message(db, unread_message.id, user_id)
 
             if loaded_data["type"] == "message":
                 user_id = loaded_data["data"]["fromId"]
@@ -305,9 +305,9 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                         try:
                             last_message = crud.get_messages(db, 0, 1)
                             actual_last_message = last_message[0]
-                            crud.create_unread_message(db, actual_last_message.id + 1)
+                            crud.create_unread_message(db, actual_last_message.id + 1, user_in_chat)
                         except:
-                            crud.create_unread_message(db, 1)
+                            crud.create_unread_message(db, 1, user_in_chat)
     except:
         for key, value in dict(active_connections).items():
             if value == websocket:
