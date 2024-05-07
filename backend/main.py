@@ -275,7 +275,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
             if loaded_data["type"] == "connection":
                     user_id = loaded_data["data"]["user"]
                     active_connections[user_id] = websocket
-                    all_unreads = crud.get_unread_messages(db)
+                    all_unreads = crud.get_unread_messages_of_user(db, user_id)
                     db_user = crud.get_user(db, user_id=user_id)
                     user_chat_ids = [chat.id for chat in db_user.chats]
                     for unread_message in all_unreads:

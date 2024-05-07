@@ -80,6 +80,10 @@ def get_unread_messages(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Message).join(models.UnreadMessage).offset(skip).limit(limit).all()
 
 
+def get_unread_messages_of_user(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Message).join(models.UnreadMessage).filter(models.UnreadMessage.user_id == user_id).offset(skip).limit(limit).all()
+
+
 def delete_unread_message(db: Session, message_id: int, user_id: int):
     db.query(models.UnreadMessage).filter(models.UnreadMessage.message_id == message_id).filter(models.UnreadMessage.user_id == user_id).delete()
     db.commit()
