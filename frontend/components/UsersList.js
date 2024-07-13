@@ -29,14 +29,14 @@ const UsersList = ({
     );
     const actualUsersIds = actualUsers.map((user) => user.id);
     const newestOfObjects = await actualUsersIds.reduce(
-      async (prevObject, userId) => {
+      async (prevPromise, userId) => {
+        const prevObject = await prevPromise;
         const response = await handleUsersFetch(userId, token);
         const parsedResponse = JSON.parse(response);
-        const newObject = {};
-        newObject[userId] = parsedResponse.lastActive;
+        const newObject = { [userId]: parsedResponse.lastActive };
         return { ...prevObject, ...newObject };
       },
-      {}
+      Promise.resolve({})
     );
     console.log("newObject: ", newestOfObjects);
     setLastActiveOfUsers(newestOfObjects);
