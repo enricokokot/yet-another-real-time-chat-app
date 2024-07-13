@@ -42,9 +42,9 @@ const ChatsList = ({
               content={"💬"}
             />
           </Pressable>
-          <Pressable
+          {/* <Pressable
             style={styles.bottomRight}
-            // onPress={() => friendStuff(user)}
+            onPress={() => friendStuff(user)}
             onPress={() => {}}
           >
             <Circle
@@ -56,7 +56,10 @@ const ChatsList = ({
               }}
               content={"+"}
             />
-          </Pressable>
+          </Pressable> */}
+          <Circle
+            style={[styles.bottomRight, styles.activityIcon, styles.active]}
+          />
           {inbox.filter((msg) => msg.data.toId === chat.id).length !== 0 &&
             chat.id !== activeChat && (
               <Circle
@@ -102,6 +105,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
   },
+  activityIcon: {
+    width: 20,
+    height: 20,
+    bottom: 5,
+    right: 5,
+  },
+  active: { backgroundColor: "#31cc46" },
+  inactive: { backgroundColor: "#aeaeae" },
 });
 
 export default ChatsList;

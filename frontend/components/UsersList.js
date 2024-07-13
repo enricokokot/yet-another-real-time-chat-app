@@ -46,6 +46,9 @@ const UsersList = ({
                 content={"💬"}
               />
             </Pressable>
+            <Circle
+              style={[styles.bottomRight, styles.activityIcon, styles.inactive]}
+            />
           </View>
         ))}
     </>
@@ -75,6 +78,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
   },
+  activityIcon: {
+    width: 20,
+    height: 20,
+    bottom: 5,
+    right: 5,
+  },
+  active: { backgroundColor: "#31cc46" },
+  inactive: { backgroundColor: "#aeaeae" },
 });
 
 export default UsersList;
