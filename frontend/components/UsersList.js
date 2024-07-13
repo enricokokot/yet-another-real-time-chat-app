@@ -47,7 +47,13 @@ const UsersList = ({
               />
             </Pressable>
             <Circle
-              style={[styles.bottomRight, styles.activityIcon, styles.inactive]}
+              style={[
+                styles.bottomRight,
+                styles.activityIcon,
+                user.lastActive + 10 > Math.floor(Date.now() / 1000)
+                  ? styles.active
+                  : styles.inactive,
+              ]}
             />
           </View>
         ))}

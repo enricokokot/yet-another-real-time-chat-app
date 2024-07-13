@@ -31,6 +31,7 @@ class Chat(BaseModel):
 
 class User(UserBase):
     id: int
+    lastActive: int
     friends: List[UserFriend] = Field(default_factory=list)
     chats: List[Chat] = Field(default_factory=list)
 
