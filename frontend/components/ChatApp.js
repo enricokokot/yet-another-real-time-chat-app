@@ -180,6 +180,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
             inbox={inbox}
             activeChat={activeChat}
             userSelected={userSelected}
+            token={token}
           />
         </ScrollView>
       </View>
