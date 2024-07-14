@@ -1,8 +1,9 @@
-import { View, StyleSheet, Pressable } from "react-native";
+import { View, StyleSheet, Pressable, Text } from "react-native";
 import Circle from "./Circle";
 import { useEffect, useState } from "react";
 import handleUsersFetch from "../api/users";
 import { useInterval } from "../hooks/useInterval";
+import moment from "moment";
 
 const UsersList = ({
   currentUser,
@@ -15,6 +16,11 @@ const UsersList = ({
   token,
 }) => {
   const [lastActiveOfUsers, setLastActiveOfUsers] = useState({});
+  const [visibilityOfLastSeen, setVisibilityOfLastSeen] = useState(
+    users.map((user) => {
+      return { [user.id]: false };
+    })
+  );
 
   const usersYouAlreadyChatWith = currentUser.chats
     .map((chat) =>
@@ -41,6 +47,17 @@ const UsersList = ({
     console.log("newObject: ", newestOfObjects);
     setLastActiveOfUsers(newestOfObjects);
   }, 3000);
+
+  const showLastSeen = (userId) => {
+    setVisibilityOfLastSeen({ ...visibilityOfLastSeen, ...{ [userId]: true } });
+  };
+
+  const hideLastSeen = (userId) => {
+    setVisibilityOfLastSeen({
+      ...visibilityOfLastSeen,
+      ...{ [userId]: false },
+    });
+  };
 
   useEffect(() => {
     console.log("lastActiveOfUsers: ", lastActiveOfUsers);
@@ -76,15 +93,32 @@ const UsersList = ({
                 content={"💬"}
               />
             </Pressable>
-            <Circle
-              style={[
-                styles.bottomRight,
-                styles.activityIcon,
-                lastActiveOfUsers[user.id] + 10 > Math.floor(Date.now() / 1000)
-                  ? styles.active
-                  : styles.inactive,
-              ]}
-            />
+            <Pressable
+              style={styles.bottomRight}
+              onHoverIn={() => {
+                lastActiveOfUsers[user.id] + 10 >
+                  Math.floor(Date.now() / 1000) || showLastSeen(user.id);
+              }}
+              onHoverOut={() => {
+                lastActiveOfUsers[user.id] + 10 >
+                  Math.floor(Date.now() / 1000) || hideLastSeen(user.id);
+              }}
+            >
+              <Circle
+                style={[
+                  styles.activityIcon,
+                  lastActiveOfUsers[user.id] + 10 >
+                  Math.floor(Date.now() / 1000)
+                    ? styles.active
+                    : styles.inactive,
+                ]}
+              />
+              {visibilityOfLastSeen[user.id] && (
+                <Text style={styles.lastSeen}>
+                  {moment.unix(lastActiveOfUsers[user.id]).fromNow()}
+                </Text>
+              )}
+            </Pressable>
           </View>
         ))}
     </>
@@ -122,6 +156,15 @@ const styles = StyleSheet.create({
   },
   active: { backgroundColor: "#31cc46" },
   inactive: { backgroundColor: "#aeaeae" },
+  lastSeen: {
+    position: "absolute",
+    right: 10,
+    bottom: 10,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    color: "white",
+    padding: 3,
+    borderRadius: 5,
+  },
 });
 
 export default UsersList;
