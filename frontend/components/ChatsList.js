@@ -1,5 +1,8 @@
 import { View, StyleSheet, Pressable } from "react-native";
 import Circle from "./Circle";
+import { useState } from "react";
+import handleUsersFetch from "../api/users";
+import { useInterval } from "../hooks/useInterval";
 
 const ChatsList = ({
   currentUser,
@@ -9,8 +12,30 @@ const ChatsList = ({
   inbox,
   activeChat,
   userSelected,
+  token,
 }) => {
   console.log("ChatsList.js: chats: ", chats);
+  const [lastActiveOfUsers, setLastActiveOfUsers] = useState({});
+
+  useInterval(async () => {
+    const chatsWithOneUser = chats.filter((chat) => chat.users.length === 2);
+    const usersInChat = chatsWithOneUser.map((chat) =>
+      chat.users.filter((user) => user.id !== currentUser.id)
+    );
+    const actualUsersIds = usersInChat.map((user) => user[0].id);
+    const newestestOfObjects = await actualUsersIds.reduce(
+      async (prevPromise, userId) => {
+        const prevObject = await prevPromise;
+        const response = await handleUsersFetch(userId, token);
+        const parsedResponse = JSON.parse(response);
+        const newObject = { [userId]: parsedResponse.lastActive };
+        return { ...prevObject, ...newObject };
+      },
+      Promise.resolve({})
+    );
+    setLastActiveOfUsers(newestestOfObjects);
+  }, 3000);
+
   return (
     <>
       {chats.map((chat) => (
@@ -57,9 +82,23 @@ const ChatsList = ({
               content={"+"}
             />
           </Pressable> */}
-          <Circle
-            style={[styles.bottomRight, styles.activityIcon, styles.active]}
-          />
+          {chat.users.length === 2 && (
+            <Circle
+              style={[
+                styles.bottomRight,
+                styles.activityIcon,
+                lastActiveOfUsers[
+                  chat.users
+                    .filter((user) => user.id !== currentUser.id)
+                    .map((user) => user.id)[0]
+                ] +
+                  10 >
+                Math.floor(Date.now() / 1000)
+                  ? styles.active
+                  : styles.inactive,
+              ]}
+            />
+          )}
           {inbox.filter((msg) => msg.data.toId === chat.id).length !== 0 &&
             chat.id !== activeChat && (
               <Circle
