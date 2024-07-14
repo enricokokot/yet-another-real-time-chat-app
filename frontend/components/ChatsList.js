@@ -1,8 +1,9 @@
-import { View, StyleSheet, Pressable } from "react-native";
+import { View, StyleSheet, Pressable, Text } from "react-native";
 import Circle from "./Circle";
 import { useState } from "react";
 import handleUsersFetch from "../api/users";
 import { useInterval } from "../hooks/useInterval";
+import moment from "moment";
 
 const ChatsList = ({
   currentUser,
@@ -16,6 +17,14 @@ const ChatsList = ({
 }) => {
   console.log("ChatsList.js: chats: ", chats);
   const [lastActiveOfUsers, setLastActiveOfUsers] = useState({});
+  const [visibilityOfLastSeen, setVisibilityOfLastSeen] = useState(
+    chats
+      .filter((chat) => chat.users.length === 2)
+      .map((chat) => chat.users.find((user) => user.id !== currentUser.id))
+      .map((userId) => {
+        return { [userId]: false };
+      })
+  );
 
   useInterval(async () => {
     const chatsWithOneUser = chats.filter((chat) => chat.users.length === 2);
@@ -35,6 +44,30 @@ const ChatsList = ({
     );
     setLastActiveOfUsers(newestestOfObjects);
   }, 3000);
+
+  const showLastSeen = (chatId) => {
+    const idOfLastSeenYouChange = chats
+      .find((chat) => chat.id === chatId)
+      .users.find((user) => user.id !== currentUser.id).id;
+    const newVisibilityOfLastSeen = {
+      ...visibilityOfLastSeen,
+      ...{ [idOfLastSeenYouChange]: true },
+    };
+    setVisibilityOfLastSeen(newVisibilityOfLastSeen);
+    console.log("newVisibilityOfLastSeen: ", newVisibilityOfLastSeen);
+  };
+
+  const hideLastSeen = (chatId) => {
+    const idOfLastSeenYouChange = chats
+      .find((chat) => chat.id === chatId)
+      .users.find((user) => user.id !== currentUser.id).id;
+    const newVisibilityOfLastSeen = {
+      ...visibilityOfLastSeen,
+      ...{ [idOfLastSeenYouChange]: false },
+    };
+    setVisibilityOfLastSeen(newVisibilityOfLastSeen);
+    console.log("newVisibilityOfLastSeen:", newVisibilityOfLastSeen);
+  };
 
   return (
     <>
@@ -83,21 +116,57 @@ const ChatsList = ({
             />
           </Pressable> */}
           {chat.users.length === 2 && (
-            <Circle
-              style={[
-                styles.bottomRight,
-                styles.activityIcon,
+            <Pressable
+              style={styles.bottomRight}
+              onHoverIn={() => {
                 lastActiveOfUsers[
                   chat.users
                     .filter((user) => user.id !== currentUser.id)
                     .map((user) => user.id)[0]
                 ] +
                   10 >
-                Math.floor(Date.now() / 1000)
-                  ? styles.active
-                  : styles.inactive,
-              ]}
-            />
+                  Math.floor(Date.now() / 1000) || showLastSeen(chat.id);
+              }}
+              onHoverOut={() => {
+                lastActiveOfUsers[
+                  chat.users
+                    .filter((user) => user.id !== currentUser.id)
+                    .map((user) => user.id)[0]
+                ] +
+                  10 >
+                  Math.floor(Date.now() / 1000) || hideLastSeen(chat.id);
+              }}
+            >
+              <Circle
+                style={[
+                  styles.activityIcon,
+                  lastActiveOfUsers[
+                    chat.users
+                      .filter((user) => user.id !== currentUser.id)
+                      .map((user) => user.id)[0]
+                  ] +
+                    10 >
+                  Math.floor(Date.now() / 1000)
+                    ? styles.active
+                    : styles.inactive,
+                ]}
+              />
+              {visibilityOfLastSeen[
+                chat.users.find((user) => user.id !== currentUser.id).id
+              ] && (
+                <Text style={styles.lastSeen}>
+                  {moment
+                    .unix(
+                      lastActiveOfUsers[
+                        chat.users
+                          .filter((user) => user.id !== currentUser.id)
+                          .map((user) => user.id)[0]
+                      ]
+                    )
+                    .fromNow()}
+                </Text>
+              )}
+            </Pressable>
           )}
           {inbox.filter((msg) => msg.data.toId === chat.id).length !== 0 &&
             chat.id !== activeChat && (
@@ -152,6 +221,15 @@ const styles = StyleSheet.create({
   },
   active: { backgroundColor: "#31cc46" },
   inactive: { backgroundColor: "#aeaeae" },
+  lastSeen: {
+    position: "absolute",
+    right: 10,
+    bottom: 10,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    color: "white",
+    padding: 3,
+    borderRadius: 5,
+  },
 });
 
 export default ChatsList;
