@@ -275,6 +275,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
             if loaded_data["type"] == "connection":
                     user_id = loaded_data["data"]["user"]
                     active_connections[user_id] = websocket
+                    crud.update_user_activity(db, user_id)
                     all_unreads = crud.get_unread_messages_of_user(db, user_id)
                     db_user = crud.get_user(db, user_id=user_id)
                     user_chat_ids = [chat.id for chat in db_user.chats]
@@ -296,6 +297,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
             if loaded_data["type"] == "message":
                 user_id = loaded_data["data"]["fromId"]
                 chat_id = loaded_data["data"]["toId"]
+                crud.update_user_activity(db, user_id)
                 db_chat = crud.get_chat(db, chat_id)
                 users_in_chat = [user.id for user in db_chat.users if user_id != user.id]
                 for user_in_chat in users_in_chat:
@@ -312,6 +314,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
         for key, value in dict(active_connections).items():
             if value == websocket:
                 active_connections.pop(key, None)
+                crud.update_user_activity(db, key)
 
 
 import uvicorn

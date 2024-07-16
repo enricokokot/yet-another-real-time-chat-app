@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from datetime import datetime
 from sqlalchemy import or_, and_
+import time
 
 import db.models as models, db.schemas as schemas
 
@@ -20,9 +21,16 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
 
 
+def update_user_activity(db:Session, user_id: int):
+    user = get_user(db, user_id)
+    user.lastActive = time.time_ns() // 10**9
+    db.commit()
+    return user
+
+
 def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = hash_password(user.password)
-    db_user = models.User(username=user.username, password=hashed_password)
+    db_user = models.User(username=user.username, password=hashed_password, lastActive=time.time_ns() / 10**9)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
