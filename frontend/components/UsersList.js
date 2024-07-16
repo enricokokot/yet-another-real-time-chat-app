@@ -113,7 +113,7 @@ const UsersList = ({
                     : styles.inactive,
                 ]}
               />
-              {visibilityOfLastSeen[user.id] && (
+              {visibilityOfLastSeen[user.id] && lastActiveOfUsers[user.id] && (
                 <Text style={styles.lastSeen}>
                   {moment.unix(lastActiveOfUsers[user.id]).fromNow()}
                 </Text>

@@ -153,19 +153,24 @@ const ChatsList = ({
               />
               {visibilityOfLastSeen[
                 chat.users.find((user) => user.id !== currentUser.id).id
-              ] && (
-                <Text style={styles.lastSeen}>
-                  {moment
-                    .unix(
-                      lastActiveOfUsers[
-                        chat.users
-                          .filter((user) => user.id !== currentUser.id)
-                          .map((user) => user.id)[0]
-                      ]
-                    )
-                    .fromNow()}
-                </Text>
-              )}
+              ] &&
+                lastActiveOfUsers[
+                  chat.users
+                    .filter((user) => user.id !== currentUser.id)
+                    .map((user) => user.id)[0]
+                ] && (
+                  <Text style={styles.lastSeen}>
+                    {moment
+                      .unix(
+                        lastActiveOfUsers[
+                          chat.users
+                            .filter((user) => user.id !== currentUser.id)
+                            .map((user) => user.id)[0]
+                        ]
+                      )
+                      .fromNow()}
+                  </Text>
+                )}
             </Pressable>
           )}
           {inbox.filter((msg) => msg.data.toId === chat.id).length !== 0 &&
