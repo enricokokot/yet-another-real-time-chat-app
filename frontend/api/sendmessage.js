@@ -1,4 +1,4 @@
-const handleSendMessage = async (requestId, responseId, text, token) => {
+const handleSendMessage = async (port, requestId, responseId, text, token) => {
   const data = {
     fromId: requestId,
     toId: responseId,
@@ -8,7 +8,7 @@ const handleSendMessage = async (requestId, responseId, text, token) => {
   console.log("sendmessage.js: data.toId: ", data.toId);
 
   try {
-    const response = await fetch(`http://127.0.0.1:80/message`, {
+    const response = await fetch(`http://127.0.0.1:${port}/message`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

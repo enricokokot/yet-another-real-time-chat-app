@@ -4,11 +4,13 @@ import LoginForm from "../components/LoginForm";
 import SigninForm from "../components/SigninForm";
 import VerticalLine from "../components/VerticalLine";
 import ChatApp from "../components/ChatApp";
+import handleConnect from "../api/connect";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState({});
   const [token, setToken] = useState("");
+  const [port, setPort] = useState(0);
 
   const handleLogin = (currentUser, token) => {
     setCurrentUser(currentUser);
@@ -21,6 +23,11 @@ export default function App() {
     setCurrentUser({});
   };
 
+  (async () => {
+    const port = await handleConnect();
+    setPort(parseInt(port));
+  })();
+
   return (
     <SafeAreaView style={styles.topContainer}>
       {isLoggedIn ? (
@@ -29,13 +36,14 @@ export default function App() {
             onLogout={handleLogout}
             currentUser={currentUser}
             token={token}
+            port={port}
           />
         </>
       ) : (
         <View style={styles.container}>
-          <LoginForm onLogin={handleLogin} />
+          <LoginForm onLogin={handleLogin} port={port} />
           <VerticalLine height={350} color="grey" />
-          <SigninForm onLogin={handleLogin} />
+          <SigninForm onLogin={handleLogin} port={port} />
         </View>
       )}
     </SafeAreaView>

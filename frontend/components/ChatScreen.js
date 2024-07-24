@@ -21,6 +21,7 @@ const ChatScreen = ({
   usersExceptUser,
   changeSubject,
   chats,
+  port,
 }) => {
   const [text, onChangeText] = useState("");
   const [currentChat, setCurrentChat] = useState([]);
@@ -62,6 +63,7 @@ const ChatScreen = ({
     }
     try {
       const data = await handleGettingChatHistory(
+        port,
         currentUser.id,
         subject,
         token,
@@ -81,7 +83,12 @@ const ChatScreen = ({
       setUsersExceptUser((previousUsers) =>
         previousUsers.filter((user) => user.id !== subject)
       );
-      const aNewChat = await handleCreateChat(currentUser.id, [subject], token);
+      const aNewChat = await handleCreateChat(
+        port,
+        currentUser.id,
+        [subject],
+        token
+      );
       setChats((previousChats) => [
         {
           id: aNewChat.id,
@@ -111,7 +118,7 @@ const ChatScreen = ({
 
     connection.send(JSON.stringify(wholeData));
 
-    await handleSendMessage(data.fromId, newSubject, data.content, token);
+    await handleSendMessage(port, data.fromId, newSubject, data.content, token);
     setCurrentChat((previousChat) => [
       {
         id: currentChat.length ? currentChat[0].id + 1 : 1,
@@ -130,6 +137,7 @@ const ChatScreen = ({
       return;
     }
     const data = await handleGettingChatHistory(
+      port,
       currentUser.id,
       subject,
       token,

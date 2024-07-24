@@ -4,9 +4,14 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Start LB",
+      "type": "shell",
+      "command": "cd backend; conda activate dissys; uvicorn balancer:app --reload --port 80"
+    },
+    {
       "label": "Start BE",
       "type": "shell",
-      "command": "cd backend; conda activate dissys; uvicorn main:app --reload --port 80"
+      "command": "cd backend; conda activate dissys; uvicorn main:app --reload --port 81"
     },
     {
       "label": "Start FE",
@@ -15,7 +20,7 @@
     },
     {
       "label": "Start All",
-      "dependsOn": ["Start BE", "Start FE"]
+      "dependsOn": ["Start LB", "Start BE", "Start FE"]
     }
   ]
 }

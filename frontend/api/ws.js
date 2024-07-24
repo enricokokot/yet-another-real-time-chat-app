@@ -1,5 +1,5 @@
-const handleOpeningWebSocket = (currentUserUsername, setInbox) => {
-  const ws = new WebSocket("ws://localhost:80/ws");
+const handleOpeningWebSocket = (port, currentUserUsername, setInbox) => {
+  const ws = new WebSocket(`ws://localhost:${port}/ws`);
 
   ws.onopen = () => {
     console.log("connection opened");

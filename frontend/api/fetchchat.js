@@ -1,6 +1,6 @@
-const handleFetchChat = async (chatId, token) => {
+const handleFetchChat = async (port, chatId, token) => {
   try {
-    const response = await fetch(`http://127.0.0.1:80/chat/${chatId}`, {
+    const response = await fetch(`http://127.0.0.1:${port}/chat/${chatId}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

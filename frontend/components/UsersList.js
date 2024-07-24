@@ -14,6 +14,7 @@ const UsersList = ({
   activeChat,
   userSelected,
   token,
+  port,
 }) => {
   const [lastActiveOfUsers, setLastActiveOfUsers] = useState({});
   const [visibilityOfLastSeen, setVisibilityOfLastSeen] = useState(
@@ -37,7 +38,7 @@ const UsersList = ({
     const newestOfObjects = await actualUsersIds.reduce(
       async (prevPromise, userId) => {
         const prevObject = await prevPromise;
-        const response = await handleUsersFetch(userId, token);
+        const response = await handleUsersFetch(port, userId, token);
         const parsedResponse = JSON.parse(response);
         const newObject = { [userId]: parsedResponse.lastActive };
         return { ...prevObject, ...newObject };

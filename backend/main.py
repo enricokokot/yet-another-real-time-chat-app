@@ -242,7 +242,7 @@ async def signin(userInfo: schemas.NewUserInfo):
     payload = {"username": userInfo.username, "password": userInfo.password}
 
     async with aiohttp.ClientSession() as session:
-        async with session.post('http://127.0.0.1:80/user/', json=payload) as response:
+        async with session.post('http://127.0.0.1:81/user/', json=payload) as response:
             new_user = await response.json()
 
     return {"message": "User successfully created.", "user": new_user}
@@ -253,7 +253,7 @@ async def signin(userInfo: schemas.NewUserInfo):
 async def login(userInfo: schemas.UserInfo):
     payload = {"username": userInfo.username, "password": userInfo.password}
     async with aiohttp.ClientSession() as session:
-        async with session.post('http://127.0.0.1:80/token', data=payload) as response:
+        async with session.post('http://127.0.0.1:81/token', data=payload) as response:
             token = await response.json()
             return {
                 "message": "Login successful.",
@@ -320,4 +320,4 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
 import uvicorn
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=80)
+    uvicorn.run(app, host="0.0.0.0", port=81)
