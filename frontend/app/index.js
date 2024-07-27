@@ -25,6 +25,7 @@ export default function App() {
 
   (async () => {
     const port = await handleConnect();
+    console.log("Debug: port:", port);
     setPort(parseInt(port));
   })();
 

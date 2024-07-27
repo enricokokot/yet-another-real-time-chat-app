@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import random
 
 app = FastAPI()
 
@@ -17,6 +18,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+ports = [81, 82]
+
 @app.get("/connect")
 async def connect():
-    return 81
+    return ports[round(random.random())]

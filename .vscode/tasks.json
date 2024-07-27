@@ -9,9 +9,19 @@
       "command": "cd backend; conda activate dissys; uvicorn balancer:app --reload --port 80"
     },
     {
-      "label": "Start BE",
+      "label": "Start Worker 1",
       "type": "shell",
       "command": "cd backend; conda activate dissys; uvicorn main:app --reload --port 81"
+    },
+    {
+      "label": "Start Worker 2",
+      "type": "shell",
+      "command": "cd backend; conda activate dissys; uvicorn main:app --reload --port 82"
+    },
+    {
+      "label": "Start Service",
+      "type": "shell",
+      "command": "cd backend; conda activate dissys; uvicorn service:app --reload --port 83"
     },
     {
       "label": "Start FE",
@@ -20,7 +30,13 @@
     },
     {
       "label": "Start All",
-      "dependsOn": ["Start LB", "Start BE", "Start FE"]
+      "dependsOn": [
+        "Start LB",
+        "Start Worker 1",
+        "Start Worker 2",
+        "Start Service",
+        "Start FE"
+      ]
     }
   ]
 }
