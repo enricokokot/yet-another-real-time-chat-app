@@ -21,7 +21,6 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-# port_number = 0
 port_number = 81
 
 if "--port" in sys.argv:
@@ -37,6 +36,7 @@ origins = [
     "http://localhost",
     "http://localhost:8173",
     "http://localhost:8081",
+    "http://localhost:8134",
 ]
 
 app.add_middleware(
@@ -327,6 +327,8 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                                 if int(port_no):
                                     async with aiohttp.ClientSession() as session_second:
                                         async with session_second.ws_connect(f'http://127.0.0.1:{int(port_no)}/ws') as ws:
+                                            loaded_data["type"] = "pass"
+                                            loaded_data["passTo"] = user_in_chat
                                             await ws.send_json(loaded_data)
                                 else:
                                     try:
@@ -335,6 +337,19 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                                         crud.create_unread_message(db, actual_last_message.id + 1, user_in_chat)
                                     except:
                                         crud.create_unread_message(db, 1, user_in_chat)
+                
+            elif loaded_data["type"] == "pass":
+                pass_to = loaded_data["passTo"]
+                if pass_to in active_connections.keys():
+                        await active_connections[pass_to].send_text(json.dumps(loaded_data))
+                else:
+                    try:
+                        last_message = crud.get_messages(db, 0, 1)
+                        actual_last_message = last_message[0]
+                        crud.create_unread_message(db, actual_last_message.id + 1, pass_to)
+                    except:
+                        crud.create_unread_message(db, 1, pass_to)
+
     except:
         for key, value in dict(active_connections).items():
             if value == websocket:
