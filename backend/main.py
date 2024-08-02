@@ -317,6 +317,13 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                 crud.update_user_activity(db, user_id)
                 db_chat = crud.get_chat(db, chat_id)
                 users_in_chat = [user.id for user in db_chat.users if user_id != user.id]
+                actual_last_message_id = 0
+                try:
+                    last_message = crud.get_messages(db, 0, 1)
+                    actual_last_message = last_message[0]
+                    actual_last_message_id = actual_last_message.id
+                except:
+                    pass
                 for user_in_chat in users_in_chat:
                     if user_in_chat in active_connections.keys():
                         await active_connections[user_in_chat].send_text(json.dumps(loaded_data))
@@ -331,12 +338,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                                             loaded_data["passTo"] = user_in_chat
                                             await ws.send_json(loaded_data)
                                 else:
-                                    try:
-                                        last_message = crud.get_messages(db, 0, 1)
-                                        actual_last_message = last_message[0]
-                                        crud.create_unread_message(db, actual_last_message.id + 1, user_in_chat)
-                                    except:
-                                        crud.create_unread_message(db, 1, user_in_chat)
+                                    crud.create_unread_message(db, actual_last_message_id + 1, user_in_chat)
                 
             elif loaded_data["type"] == "pass":
                 pass_to = loaded_data["passTo"]
