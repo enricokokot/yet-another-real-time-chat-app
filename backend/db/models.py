@@ -58,5 +58,6 @@ class Chat(Base):
     __tablename__ = "chats"
 
     id = Column(Integer, primary_key=True)
+    lastMessage = Column(String)
     users = relationship("User", secondary=chats_users, back_populates="chats")
     messages = relationship("Message", back_populates="chat")
