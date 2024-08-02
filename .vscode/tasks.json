@@ -37,6 +37,10 @@
         "Start Service",
         "Start FE"
       ]
+    },
+    {
+      "label": "Start Workers",
+      "dependsOn": ["Start Worker 1", "Start Worker 2"]
     }
   ]
 }
