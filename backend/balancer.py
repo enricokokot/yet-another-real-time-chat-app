@@ -19,8 +19,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-ports = [81, 82]
+ports = []
 
 @app.get("/connect")
 async def connect():
-    return ports[round(random.random())]
+    global ports
+    if ports:
+        return ports[round(random.random() * (len(ports) - 1))]
+    else:
+        return None
+
+@app.post("/worker/{port_number}")
+async def connect_worker(port_number):
+    global ports
+    if int(port_number) not in ports:
+        ports.append(int(port_number))
+    return int(port_number)
+
+@app.delete("/worker/{port_number}")
+async def diconnect_worker(port_number):
+    global ports
+    ports = [port for port in ports if port != int(port_number)]
+    return int(port_number)

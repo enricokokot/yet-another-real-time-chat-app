@@ -11,6 +11,7 @@ import os
 import aiohttp
 import json
 import sys
+from contextlib import asynccontextmanager
 
 import db.crud as crud, db.models as models, db.schemas as schemas
 from db.database import SessionLocal, engine
@@ -23,14 +24,26 @@ ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 port_number = 81
 
-if "--port" in sys.argv:
-    port_index = sys.argv.index("--port") + 1
-    if port_index < len(sys.argv):
-        port_number = int(sys.argv[port_index])
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global port_number
+    if "--port" in sys.argv:
+        port_index = sys.argv.index("--port") + 1
+        if port_index < len(sys.argv):
+            port_number = int(sys.argv[port_index])
+    async with aiohttp.ClientSession() as session:
+        async with session.post("http://127.0.0.1:80/worker/" + str(port_number)) as response:
+            result = await response.json()
+            print(result)
+    yield
+    async with aiohttp.ClientSession() as session:
+        async with session.delete("http://127.0.0.1:80/worker/" + str(port_number)) as response:
+            result = await response.json()
+            print(result)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost",
