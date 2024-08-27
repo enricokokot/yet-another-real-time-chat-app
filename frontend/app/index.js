@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView, StyleSheet, View } from "react-native";
 import LoginForm from "../components/LoginForm";
 import SigninForm from "../components/SigninForm";
@@ -23,11 +23,15 @@ export default function App() {
     setCurrentUser({});
   };
 
-  (async () => {
+  const connectToPort = async () => {
     const port = await handleConnect();
     console.log("Debug: port:", port);
     setPort(parseInt(port));
-  })();
+  };
+
+  useEffect(() => {
+    connectToPort();
+  }, []);
 
   return (
     <SafeAreaView style={styles.topContainer}>
