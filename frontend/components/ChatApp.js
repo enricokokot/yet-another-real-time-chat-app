@@ -18,7 +18,7 @@ import ChatMaker from "./ChatMaker";
 import handleCreateChat from "../api/createchat";
 import handleFetchChat from "../api/fetchchat";
 
-const ChatApp = ({ onLogout, currentUser, token, port }) => {
+const ChatApp = ({ onLogout, currentUser, token, port, setPort }) => {
   // const [friends, setFriends] = useState([]);
   // const [others, setOthers] = useState([]);
   const [usersExceptUser, setUsersExceptUser] = useState([]);
@@ -34,15 +34,18 @@ const ChatApp = ({ onLogout, currentUser, token, port }) => {
   const [visibilityOfModal, setVisibilityOfModal] = useState(false);
 
   const openWebSocket = () => {
-    const ws = handleOpeningWebSocket(port, currentUser.id, setInbox);
+    const ws = handleOpeningWebSocket(port, currentUser.id, setInbox, setPort);
     setWs(ws);
   };
 
   useEffect(() => {
     setChats(currentUser.chats);
-    openWebSocket();
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    openWebSocket();
+  }, [port]);
 
   useEffect(() => {
     setInbox(inbox.filter((message) => message.data.toId !== activeChat));

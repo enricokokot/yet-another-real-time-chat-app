@@ -42,6 +42,7 @@ export default function App() {
             currentUser={currentUser}
             token={token}
             port={port}
+            setPort={setPort}
           />
         </>
       ) : (
