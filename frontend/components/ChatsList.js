@@ -28,22 +28,26 @@ const ChatsList = ({
   );
 
   useInterval(async () => {
-    const chatsWithOneUser = chats.filter((chat) => chat.users.length === 2);
-    const usersInChat = chatsWithOneUser.map((chat) =>
-      chat.users.filter((user) => user.id !== currentUser.id)
-    );
-    const actualUsersIds = usersInChat.map((user) => user[0].id);
-    const newestestOfObjects = await actualUsersIds.reduce(
-      async (prevPromise, userId) => {
-        const prevObject = await prevPromise;
-        const response = await handleUsersFetch(port, userId, token);
-        const parsedResponse = JSON.parse(response);
-        const newObject = { [userId]: parsedResponse.lastActive };
-        return { ...prevObject, ...newObject };
-      },
-      Promise.resolve({})
-    );
-    setLastActiveOfUsers(newestestOfObjects);
+    try {
+      const chatsWithOneUser = chats.filter((chat) => chat.users.length === 2);
+      const usersInChat = chatsWithOneUser.map((chat) =>
+        chat.users.filter((user) => user.id !== currentUser.id)
+      );
+      const actualUsersIds = usersInChat.map((user) => user[0].id);
+      const newestestOfObjects = await actualUsersIds.reduce(
+        async (prevPromise, userId) => {
+          const prevObject = await prevPromise;
+          const response = await handleUsersFetch(port, userId, token);
+          const parsedResponse = JSON.parse(response);
+          const newObject = { [userId]: parsedResponse.lastActive };
+          return { ...prevObject, ...newObject };
+        },
+        Promise.resolve({})
+      );
+      setLastActiveOfUsers(newestestOfObjects);
+    } catch (error) {
+      console.log(error);
+    }
   }, 3000);
 
   const showLastSeen = (chatId) => {
