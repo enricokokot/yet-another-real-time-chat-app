@@ -1,8 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import random
+from contextlib import asynccontextmanager
+import aiohttp
+import asyncio
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(start_checking_for_workers())
+    yield
+    task.cancel()
+
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost",
@@ -41,3 +50,22 @@ async def diconnect_worker(port_number):
     global ports
     ports = [port for port in ports if port != int(port_number)]
     return int(port_number)
+
+async def start_checking_for_workers():
+    global ports
+    while True:
+        for port_number in ports:
+            async with aiohttp.ClientSession() as session:
+                try:
+                    async with session.get(f"http://127.0.0.1:{str(port_number)}") as response:
+                        result = await response.json()
+                except aiohttp.ClientConnectorError as err:
+                    await diconnect_worker(port_number)
+        # print(f"Pass completed. Current status: {ports}")
+        await asyncio.sleep(1)
+
+
+import uvicorn
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=80)
