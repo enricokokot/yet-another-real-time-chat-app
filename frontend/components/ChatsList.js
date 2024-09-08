@@ -14,6 +14,7 @@ const ChatsList = ({
   activeChat,
   userSelected,
   token,
+  port,
 }) => {
   console.log("ChatsList.js: chats: ", chats);
   const [lastActiveOfUsers, setLastActiveOfUsers] = useState({});
@@ -27,22 +28,26 @@ const ChatsList = ({
   );
 
   useInterval(async () => {
-    const chatsWithOneUser = chats.filter((chat) => chat.users.length === 2);
-    const usersInChat = chatsWithOneUser.map((chat) =>
-      chat.users.filter((user) => user.id !== currentUser.id)
-    );
-    const actualUsersIds = usersInChat.map((user) => user[0].id);
-    const newestestOfObjects = await actualUsersIds.reduce(
-      async (prevPromise, userId) => {
-        const prevObject = await prevPromise;
-        const response = await handleUsersFetch(userId, token);
-        const parsedResponse = JSON.parse(response);
-        const newObject = { [userId]: parsedResponse.lastActive };
-        return { ...prevObject, ...newObject };
-      },
-      Promise.resolve({})
-    );
-    setLastActiveOfUsers(newestestOfObjects);
+    try {
+      const chatsWithOneUser = chats.filter((chat) => chat.users.length === 2);
+      const usersInChat = chatsWithOneUser.map((chat) =>
+        chat.users.filter((user) => user.id !== currentUser.id)
+      );
+      const actualUsersIds = usersInChat.map((user) => user[0].id);
+      const newestestOfObjects = await actualUsersIds.reduce(
+        async (prevPromise, userId) => {
+          const prevObject = await prevPromise;
+          const response = await handleUsersFetch(port, userId, token);
+          const parsedResponse = JSON.parse(response);
+          const newObject = { [userId]: parsedResponse.lastActive };
+          return { ...prevObject, ...newObject };
+        },
+        Promise.resolve({})
+      );
+      setLastActiveOfUsers(newestestOfObjects);
+    } catch (error) {
+      console.log(error);
+    }
   }, 3000);
 
   const showLastSeen = (chatId) => {
@@ -71,36 +76,40 @@ const ChatsList = ({
 
   return (
     <>
-      {chats.map((chat) => (
-        <View key={chat.id} style={styles.container}>
-          <Circle
-            content={chat.users
-              .filter((user) => user.id !== currentUser.id)
-              .map((user) => user.username)
-              .join(", ")}
-            style={
-              chat.id === activeChat &&
-              !userSelected && {
-                borderWidth: 2,
-                borderColor: "#000",
-              }
-            }
-          />
-          <Pressable
-            style={styles.bottomLeft}
-            onPress={() => startChat(chat.id, false)}
-          >
+      {chats
+        .sort(
+          (chatLeft, chatRight) => chatRight.lastMessage - chatLeft.lastMessage
+        )
+        .map((chat) => (
+          <View key={chat.id} style={styles.container}>
             <Circle
-              style={{
-                width: 35,
-                height: 35,
-                borderWidth: 1,
-                borderColor: "#fff",
-              }}
-              content={"💬"}
+              content={chat.users
+                .filter((user) => user.id !== currentUser.id)
+                .map((user) => user.username)
+                .join(", ")}
+              style={
+                chat.id === activeChat &&
+                !userSelected && {
+                  borderWidth: 2,
+                  borderColor: "#000",
+                }
+              }
             />
-          </Pressable>
-          {/* <Pressable
+            <Pressable
+              style={styles.bottomLeft}
+              onPress={() => startChat(chat.id, false)}
+            >
+              <Circle
+                style={{
+                  width: 35,
+                  height: 35,
+                  borderWidth: 1,
+                  borderColor: "#fff",
+                }}
+                content={"💬"}
+              />
+            </Pressable>
+            {/* <Pressable
             style={styles.bottomRight}
             onPress={() => friendStuff(user)}
             onPress={() => {}}
@@ -115,82 +124,82 @@ const ChatsList = ({
               content={"+"}
             />
           </Pressable> */}
-          {chat.users.length === 2 && (
-            <Pressable
-              style={styles.bottomRight}
-              onHoverIn={() => {
-                lastActiveOfUsers[
-                  chat.users
-                    .filter((user) => user.id !== currentUser.id)
-                    .map((user) => user.id)[0]
-                ] +
-                  10 >
-                  Math.floor(Date.now() / 1000) || showLastSeen(chat.id);
-              }}
-              onHoverOut={() => {
-                lastActiveOfUsers[
-                  chat.users
-                    .filter((user) => user.id !== currentUser.id)
-                    .map((user) => user.id)[0]
-                ] +
-                  10 >
-                  Math.floor(Date.now() / 1000) || hideLastSeen(chat.id);
-              }}
-            >
-              <Circle
-                style={[
-                  styles.activityIcon,
+            {chat.users.length === 2 && (
+              <Pressable
+                style={styles.bottomRight}
+                onHoverIn={() => {
                   lastActiveOfUsers[
                     chat.users
                       .filter((user) => user.id !== currentUser.id)
                       .map((user) => user.id)[0]
                   ] +
                     10 >
-                  Math.floor(Date.now() / 1000)
-                    ? styles.active
-                    : styles.inactive,
-                ]}
-              />
-              {visibilityOfLastSeen[
-                chat.users.find((user) => user.id !== currentUser.id).id
-              ] &&
-                lastActiveOfUsers[
-                  chat.users
-                    .filter((user) => user.id !== currentUser.id)
-                    .map((user) => user.id)[0]
-                ] && (
-                  <Text style={styles.lastSeen}>
-                    {moment
-                      .unix(
-                        lastActiveOfUsers[
-                          chat.users
-                            .filter((user) => user.id !== currentUser.id)
-                            .map((user) => user.id)[0]
-                        ]
-                      )
-                      .fromNow()}
-                  </Text>
-                )}
-            </Pressable>
-          )}
-          {inbox.filter((msg) => msg.data.toId === chat.id).length !== 0 &&
-            chat.id !== activeChat && (
-              <Circle
-                style={[
-                  styles.topRight,
-                  {
-                    width: 35,
-                    height: 35,
-                    backgroundColor: "red",
-                  },
-                ]}
-                content={
-                  inbox.filter((msg) => msg.data.toId === chat.id).length
-                }
-              />
+                    Math.floor(Date.now() / 1000) || showLastSeen(chat.id);
+                }}
+                onHoverOut={() => {
+                  lastActiveOfUsers[
+                    chat.users
+                      .filter((user) => user.id !== currentUser.id)
+                      .map((user) => user.id)[0]
+                  ] +
+                    10 >
+                    Math.floor(Date.now() / 1000) || hideLastSeen(chat.id);
+                }}
+              >
+                <Circle
+                  style={[
+                    styles.activityIcon,
+                    lastActiveOfUsers[
+                      chat.users
+                        .filter((user) => user.id !== currentUser.id)
+                        .map((user) => user.id)[0]
+                    ] +
+                      10 >
+                    Math.floor(Date.now() / 1000)
+                      ? styles.active
+                      : styles.inactive,
+                  ]}
+                />
+                {visibilityOfLastSeen[
+                  chat.users.find((user) => user.id !== currentUser.id).id
+                ] &&
+                  lastActiveOfUsers[
+                    chat.users
+                      .filter((user) => user.id !== currentUser.id)
+                      .map((user) => user.id)[0]
+                  ] && (
+                    <Text style={styles.lastSeen}>
+                      {moment
+                        .unix(
+                          lastActiveOfUsers[
+                            chat.users
+                              .filter((user) => user.id !== currentUser.id)
+                              .map((user) => user.id)[0]
+                          ]
+                        )
+                        .fromNow()}
+                    </Text>
+                  )}
+              </Pressable>
             )}
-        </View>
-      ))}
+            {inbox.filter((msg) => msg.data.toId === chat.id).length !== 0 &&
+              chat.id !== activeChat && (
+                <Circle
+                  style={[
+                    styles.topRight,
+                    {
+                      width: 35,
+                      height: 35,
+                      backgroundColor: "red",
+                    },
+                  ]}
+                  content={
+                    inbox.filter((msg) => msg.data.toId === chat.id).length
+                  }
+                />
+              )}
+          </View>
+        ))}
     </>
   );
 };

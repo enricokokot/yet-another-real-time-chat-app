@@ -18,7 +18,7 @@ import ChatMaker from "./ChatMaker";
 import handleCreateChat from "../api/createchat";
 import handleFetchChat from "../api/fetchchat";
 
-const ChatApp = ({ onLogout, currentUser, token }) => {
+const ChatApp = ({ onLogout, currentUser, token, port, setPort }) => {
   // const [friends, setFriends] = useState([]);
   // const [others, setOthers] = useState([]);
   const [usersExceptUser, setUsersExceptUser] = useState([]);
@@ -34,15 +34,18 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   const [visibilityOfModal, setVisibilityOfModal] = useState(false);
 
   const openWebSocket = () => {
-    const ws = handleOpeningWebSocket(currentUser.id, setInbox);
+    const ws = handleOpeningWebSocket(port, currentUser.id, setInbox, setPort);
     setWs(ws);
   };
 
   useEffect(() => {
     setChats(currentUser.chats);
-    openWebSocket();
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    openWebSocket();
+  }, [port]);
 
   useEffect(() => {
     setInbox(inbox.filter((message) => message.data.toId !== activeChat));
@@ -66,14 +69,14 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
   }, [unknownInInbox]);
 
   const fetchChat = async (chatId) => {
-    const newChat = await handleFetchChat(chatId, token);
+    const newChat = await handleFetchChat(port, chatId, token);
     console.log("ChatApp.js: fetchChat: newChat: ", newChat);
     setChats((previousChats) => [newChat, ...previousChats]);
   };
 
   const fetchUsers = async () => {
     try {
-      const allUsers = await handleUsersFetch("undefined", token);
+      const allUsers = await handleUsersFetch(port, "undefined", token);
       const actualUsers = Array.from(JSON.parse(allUsers));
       console.log("ChatApp.js: actualUsers: ", actualUsers);
       // const actualFriends = currentUser.friends;
@@ -135,6 +138,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
 
   const createChat = async (selectedUsers) => {
     const newChat = await handleCreateChat(
+      port,
       currentUser.id,
       selectedUsers.map((user) => user.id),
       token
@@ -181,6 +185,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
             activeChat={activeChat}
             userSelected={userSelected}
             token={token}
+            port={port}
           />
         </ScrollView>
       </View>
@@ -199,6 +204,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
               activeChat={activeChat}
               userSelected={userSelected}
               token={token}
+              port={port}
             />
           </ScrollView>
         </View>
@@ -217,6 +223,7 @@ const ChatApp = ({ onLogout, currentUser, token }) => {
           usersExceptUser={usersExceptUser}
           changeSubject={changeSubject}
           chats={chats}
+          port={port}
         />
       </View>
     </View>

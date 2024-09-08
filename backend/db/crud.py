@@ -63,6 +63,7 @@ def delete_friendship(db: Session, requestUser: models.User, responseUser: model
 def create_message(db: Session, message: schemas.MessageCreate):
     chat = db.query(models.Chat).filter(models.Chat.id == message["toId"]).first()
     chat.messages.append(models.Message(**message, timestamp=str(datetime.now())))
+    chat.lastMessage = time.time_ns() // 10**9
     db.commit()
     db.refresh(chat)
     return chat.messages[-1]
@@ -100,7 +101,7 @@ def delete_unread_message(db: Session, message_id: int, user_id: int):
 
 def create_chat(db: Session, participants: list[int]):
     db_participants = db.query(models.User).filter(models.User.id.in_(participants)).all()
-    db_chat = models.Chat(users=db_participants)
+    db_chat = models.Chat(users=db_participants, lastMessage=time.time_ns() // 10**9)
     db.add(db_chat)
     db.commit()
     db.refresh(db_chat)

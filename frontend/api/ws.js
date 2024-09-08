@@ -1,5 +1,12 @@
-const handleOpeningWebSocket = (currentUserUsername, setInbox) => {
-  const ws = new WebSocket("ws://localhost:80/ws");
+import handleConnect from "../api/connect";
+
+const handleOpeningWebSocket = (
+  port,
+  currentUserUsername,
+  setInbox,
+  setPort
+) => {
+  const ws = new WebSocket(`ws://localhost:${port}/ws`);
 
   ws.onopen = () => {
     console.log("connection opened");
@@ -23,9 +30,19 @@ const handleOpeningWebSocket = (currentUserUsername, setInbox) => {
     console.log(e.message);
   };
 
-  ws.onclose = (e) => {
+  ws.onclose = async (e) => {
     console.log("connection closed");
     console.log(e.code, e.reason);
+    setTimeout(async () => {
+      let oldPort = port;
+      let newPort = port;
+      while (newPort === oldPort) {
+        newPort = await handleConnect();
+        newPort = parseInt(newPort);
+      }
+      console.log("Debug: port:", newPort);
+      setPort(parseInt(newPort));
+    }, 1000);
   };
   return ws;
 };

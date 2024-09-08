@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 import os
 import aiohttp
 import json
+import sys
+from contextlib import asynccontextmanager
 
 import db.crud as crud, db.models as models, db.schemas as schemas
 from db.database import SessionLocal, engine
@@ -20,15 +22,34 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+port_number = 81
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global port_number
+    if "--port" in sys.argv:
+        port_index = sys.argv.index("--port") + 1
+        if port_index < len(sys.argv):
+            port_number = int(sys.argv[port_index])
+    async with aiohttp.ClientSession() as session:
+        async with session.post("http://127.0.0.1:80/worker/" + str(port_number)) as response:
+            result = await response.json()
+            print(result)
+    yield
+    async with aiohttp.ClientSession() as session:
+        async with session.delete("http://127.0.0.1:80/worker/" + str(port_number)) as response:
+            result = await response.json()
+            print(result)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost",
     "http://localhost:8173",
     "http://localhost:8081",
+    "http://localhost:8134",
 ]
 
 app.add_middleware(
@@ -237,12 +258,13 @@ async def login_for_access_token(
 
 @app.post("/signin")
 async def signin(userInfo: schemas.NewUserInfo):
+    global port_number
     if userInfo.password != userInfo.passwordAgain:
         return {"message": "Passwords are not equal!"}
     payload = {"username": userInfo.username, "password": userInfo.password}
 
     async with aiohttp.ClientSession() as session:
-        async with session.post('http://127.0.0.1:80/user/', json=payload) as response:
+        async with session.post(f'http://127.0.0.1:{port_number}/user/', json=payload) as response:
             new_user = await response.json()
 
     return {"message": "User successfully created.", "user": new_user}
@@ -251,9 +273,10 @@ async def signin(userInfo: schemas.NewUserInfo):
 
 @app.post("/login")
 async def login(userInfo: schemas.UserInfo):
+    global port_number
     payload = {"username": userInfo.username, "password": userInfo.password}
     async with aiohttp.ClientSession() as session:
-        async with session.post('http://127.0.0.1:80/token', data=payload) as response:
+        async with session.post(f'http://127.0.0.1:{port_number}/token', data=payload) as response:
             token = await response.json()
             return {
                 "message": "Login successful.",
@@ -266,6 +289,7 @@ active_connections = {}
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
+    global port_number
     await websocket.accept()
 
     try:
@@ -276,6 +300,12 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                     user_id = loaded_data["data"]["user"]
                     active_connections[user_id] = websocket
                     crud.update_user_activity(db, user_id)
+                    try:
+                        async with aiohttp.ClientSession() as session:
+                            async with session.post(f'http://127.0.0.1:89/port/{int(port_number)}/{int(user_id)}') as response:
+                                await response.text()
+                    except Exception as e:
+                        print(e)
                     all_unreads = crud.get_unread_messages_of_user(db, user_id)
                     db_user = crud.get_user(db, user_id=user_id)
                     user_chat_ids = [chat.id for chat in db_user.chats]
@@ -300,24 +330,53 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                 crud.update_user_activity(db, user_id)
                 db_chat = crud.get_chat(db, chat_id)
                 users_in_chat = [user.id for user in db_chat.users if user_id != user.id]
+                actual_last_message_id = 0
+                try:
+                    last_message = crud.get_messages(db, 0, 1)
+                    actual_last_message = last_message[0]
+                    actual_last_message_id = actual_last_message.id
+                except:
+                    pass
                 for user_in_chat in users_in_chat:
                     if user_in_chat in active_connections.keys():
                         await active_connections[user_in_chat].send_text(json.dumps(loaded_data))
                     else:
-                        try:
-                            last_message = crud.get_messages(db, 0, 1)
-                            actual_last_message = last_message[0]
-                            crud.create_unread_message(db, actual_last_message.id + 1, user_in_chat)
-                        except:
-                            crud.create_unread_message(db, 1, user_in_chat)
+                        async with aiohttp.ClientSession() as session_first:
+                            async with session_first.get(f'http://127.0.0.1:89/user/{user_in_chat}') as response:
+                                port_no = await response.text()
+                                if int(port_no):
+                                    async with aiohttp.ClientSession() as session_second:
+                                        async with session_second.ws_connect(f'http://127.0.0.1:{int(port_no)}/ws') as ws:
+                                            loaded_data["type"] = "pass"
+                                            loaded_data["passTo"] = user_in_chat
+                                            await ws.send_json(loaded_data)
+                                else:
+                                    crud.create_unread_message(db, actual_last_message_id + 1, user_in_chat)
+                
+            elif loaded_data["type"] == "pass":
+                pass_to = loaded_data["passTo"]
+                if pass_to in active_connections.keys():
+                        await active_connections[pass_to].send_text(json.dumps(loaded_data))
+                else:
+                    try:
+                        last_message = crud.get_messages(db, 0, 1)
+                        actual_last_message = last_message[0]
+                        crud.create_unread_message(db, actual_last_message.id + 1, pass_to)
+                    except:
+                        crud.create_unread_message(db, 1, pass_to)
+
     except:
         for key, value in dict(active_connections).items():
             if value == websocket:
                 active_connections.pop(key, None)
                 crud.update_user_activity(db, key)
+                async with aiohttp.ClientSession() as session:
+                    async with session.delete(f'http://127.0.0.1:89/user/{key}') as response:
+                        await response.text()
+
 
 
 import uvicorn
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=80)
+    uvicorn.run(app, host="0.0.0.0", port=81)

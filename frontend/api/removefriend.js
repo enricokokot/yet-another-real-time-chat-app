@@ -1,7 +1,12 @@
-const handleUsersRemovingFriends = async (requestId, responseId, token) => {
+const handleUsersRemovingFriends = async (
+  port,
+  requestId,
+  responseId,
+  token
+) => {
   try {
     const response = await fetch(
-      `http://127.0.0.1:80/user/${requestId}/${responseId}`,
+      `http://127.0.0.1:${port}/user/${requestId}/${responseId}`,
       {
         method: "DELETE",
         headers: {

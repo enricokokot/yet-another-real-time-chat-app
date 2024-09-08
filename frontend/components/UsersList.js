@@ -14,6 +14,7 @@ const UsersList = ({
   activeChat,
   userSelected,
   token,
+  port,
 }) => {
   const [lastActiveOfUsers, setLastActiveOfUsers] = useState({});
   const [visibilityOfLastSeen, setVisibilityOfLastSeen] = useState(
@@ -30,22 +31,26 @@ const UsersList = ({
     .map((chat) => chat[0]);
 
   useInterval(async () => {
-    const actualUsers = users.filter(
-      (user) => !usersYouAlreadyChatWith.includes(user.id)
-    );
-    const actualUsersIds = actualUsers.map((user) => user.id);
-    const newestOfObjects = await actualUsersIds.reduce(
-      async (prevPromise, userId) => {
-        const prevObject = await prevPromise;
-        const response = await handleUsersFetch(userId, token);
-        const parsedResponse = JSON.parse(response);
-        const newObject = { [userId]: parsedResponse.lastActive };
-        return { ...prevObject, ...newObject };
-      },
-      Promise.resolve({})
-    );
-    console.log("newObject: ", newestOfObjects);
-    setLastActiveOfUsers(newestOfObjects);
+    try {
+      const actualUsers = users.filter(
+        (user) => !usersYouAlreadyChatWith.includes(user.id)
+      );
+      const actualUsersIds = actualUsers.map((user) => user.id);
+      const newestOfObjects = await actualUsersIds.reduce(
+        async (prevPromise, userId) => {
+          const prevObject = await prevPromise;
+          const response = await handleUsersFetch(port, userId, token);
+          const parsedResponse = JSON.parse(response);
+          const newObject = { [userId]: parsedResponse.lastActive };
+          return { ...prevObject, ...newObject };
+        },
+        Promise.resolve({})
+      );
+      console.log("newObject: ", newestOfObjects);
+      setLastActiveOfUsers(newestOfObjects);
+    } catch (error) {
+      console.log(error);
+    }
   }, 3000);
 
   const showLastSeen = (userId) => {

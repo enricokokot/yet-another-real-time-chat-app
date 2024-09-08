@@ -3,15 +3,16 @@ import { Button, SafeAreaView, StyleSheet, TextInput } from "react-native";
 import handleLogin from "../api/login";
 import handleUsersFetch from "../api/users";
 
-export default function LoginForm({ onLogin }) {
+export default function LoginForm({ onLogin, port }) {
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
 
   const submit = async () => {
     try {
-      const tokenResponse = await handleLogin(username, password);
+      const tokenResponse = await handleLogin(port, username, password);
       const parsedTokenResponse = JSON.parse(tokenResponse);
       const allUsersResponse = await handleUsersFetch(
+        port,
         "undefined",
         parsedTokenResponse.token.access_token
       );

@@ -24,6 +24,7 @@ class ChatCreate(BaseModel):
 class Chat(BaseModel):
     id: int
     users: List[UserFriend] = Field(default_factory=list)
+    lastMessage: str
 
     class Config:
         orm_mode = True
