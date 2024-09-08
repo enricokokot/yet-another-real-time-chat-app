@@ -302,7 +302,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                     crud.update_user_activity(db, user_id)
                     try:
                         async with aiohttp.ClientSession() as session:
-                            async with session.post(f'http://127.0.0.1:83/port/{int(port_number)}/{int(user_id)}') as response:
+                            async with session.post(f'http://127.0.0.1:89/port/{int(port_number)}/{int(user_id)}') as response:
                                 await response.text()
                     except Exception as e:
                         print(e)
@@ -342,7 +342,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                         await active_connections[user_in_chat].send_text(json.dumps(loaded_data))
                     else:
                         async with aiohttp.ClientSession() as session_first:
-                            async with session_first.get(f'http://127.0.0.1:83/user/{user_in_chat}') as response:
+                            async with session_first.get(f'http://127.0.0.1:89/user/{user_in_chat}') as response:
                                 port_no = await response.text()
                                 if int(port_no):
                                     async with aiohttp.ClientSession() as session_second:
@@ -371,7 +371,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                 active_connections.pop(key, None)
                 crud.update_user_activity(db, key)
                 async with aiohttp.ClientSession() as session:
-                    async with session.delete(f'http://127.0.0.1:83/user/{key}') as response:
+                    async with session.delete(f'http://127.0.0.1:89/user/{key}') as response:
                         await response.text()
 
 
